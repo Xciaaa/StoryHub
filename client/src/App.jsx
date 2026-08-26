@@ -1,3 +1,3 @@
 
 import './App.css'
-<p>tae</p>
+<p className ="tae">tae</p>

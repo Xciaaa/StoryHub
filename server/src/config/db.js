@@ -6,14 +6,15 @@
  */
 const { Pool } = require('pg');
 
-const isProduction = process.env.NODE_ENV === 'production';
+// Force SSL for remote cloud databases regardless of NODE_ENV, 
+// or check if the connection string points to localhost.
+const isLocal = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('localhost');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction
-    ? { rejectUnauthorized: false }
-    : false,
-  // Reasonable defaults for a small-to-mid web service; tune as load grows.
+  ssl: isLocal
+    ? false
+    : { rejectUnauthorized: false }, // Always allow cloud SSL certificates locally
   max: parseInt(process.env.PG_POOL_MAX || '10', 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
