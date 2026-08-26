@@ -108,6 +108,20 @@ const getPublicProject = asyncHandler(async (req, res) => {
   return res.json(data);
 });
 
+/**
+ * Browse all public projects — no auth required.
+ * Supports ?page=1&limit=20 pagination.
+ */
+const listPublicProjects = asyncHandler(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
+
+  const { data, fromCache } = await projectService.listPublicProjects({ page, limit });
+
+  res.set('X-Cache', fromCache ? 'HIT' : 'MISS');
+  return res.json(data);
+});
+
 module.exports = {
   createProject,
   listProjects,
@@ -115,4 +129,5 @@ module.exports = {
   updateProject,
   deleteProject,
   getPublicProject,
+  listPublicProjects,
 };

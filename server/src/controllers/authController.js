@@ -1,0 +1,66 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const userService = require('../services/userService');
+
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+const SALT_ROUNDS = 10;
+const TOKEN_EXPIRY = '7d';
+
+function issueToken(user) {
+  return jwt.sign({ sub: user.id, username: user.username }, process.env.JWT_SECRET, {
+    expiresIn: TOKEN_EXPIRY,
+  });
+}
+
+const signup = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'username, email, and password are required' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'password must be at least 8 characters' });
+  }
+
+  const existing = await userService.findUserByEmail(email);
+  if (existing) {
+    return res.status(409).json({ error: 'An account with that email already exists' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const user = await userService.createUser({ username, email, passwordHash });
+  const token = issueToken(user);
+
+  return res.status(201).json({
+    token,
+    user: { id: user.id, username: user.username, email: user.email },
+  });
+});
+
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'email and password are required' });
+  }
+
+  const user = await userService.findUserByEmail(email);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  const token = issueToken(user);
+
+  return res.json({
+    token,
+    user: { id: user.id, username: user.username, email: user.email },
+  });
+});
+
+module.exports = { signup, login };

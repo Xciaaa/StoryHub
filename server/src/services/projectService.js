@@ -129,6 +129,33 @@ async function getPublicProject(id) {
   return { data: project, fromCache: false };
 }
 
+const PUBLIC_LIST_CACHE_TTL_SECONDS = 30;
+const publicListCacheKey = (page, limit) => `community:projects:${page}:${limit}`;
+
+async function listPublicProjects({ page = 1, limit = 20 } = {}) {
+  const offset = (page - 1) * limit;
+  const cacheKey = publicListCacheKey(page, limit);
+
+  const cached = await getCached(cacheKey);
+  if (cached) {
+    return { data: cached, fromCache: true };
+  }
+
+  const result = await query(
+    `SELECT id, title, description, updated_at
+     FROM projects
+     WHERE is_public = true
+     ORDER BY updated_at DESC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+
+  const projects = result.rows;
+  await setCached(cacheKey, projects);
+
+  return { data: projects, fromCache: false };
+}
+
 module.exports = {
   createProject,
   getOwnedProject,
@@ -136,4 +163,5 @@ module.exports = {
   updateProject,
   deleteProject,
   getPublicProject,
+  listPublicProjects,
 };
