@@ -14,7 +14,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
 
   const locations = useMemo(() => {
     if (!nodes?.length) return [];
-    return nodes.filter((n) => n.data?.type === 'Location');
+    return nodes.filter((n) => n.data?.type === 'Location' && !n.data?.trashed);
   }, [nodes]);
 
   const locationEdges = useMemo(() => {
@@ -103,7 +103,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
     if (!deleteConfirmId) return;
     const loc = locations.find((l) => l.id === deleteConfirmId);
     if (loc) {
-      deleteNode(loc.id);
+      updateNodeData(loc.id, 'trashed', true);
       if (editingId === loc.id) {
         setEditingId(null);
         setDraft((prev) => {

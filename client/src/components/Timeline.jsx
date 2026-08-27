@@ -11,8 +11,9 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
   const events = useMemo(() => {
     if (!nodes?.length) return [];
     return nodes
-      .filter((n) => n.data?.type === 'Plot Event')
-      .sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0));
+      .filter((n) => n.data?.type === 'Plot Event' && !n.data?.trashed)
+      .sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0))
+      .slice(0, 20);
   }, [nodes]);
 
   const startEdit = (event, field, value) => {
@@ -68,7 +69,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
 
   const confirmDelete = () => {
     if (!deleteConfirmId) return;
-    deleteNode(deleteConfirmId);
+    updateNodeData(deleteConfirmId, 'trashed', true);
     setDeleteConfirmId(null);
   };
 

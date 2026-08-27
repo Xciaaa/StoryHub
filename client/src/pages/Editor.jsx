@@ -162,7 +162,7 @@ export default function Editor() {
         setProject(server);
         setTitle(server.title);
         setIsPublic(server.is_public);
-        const nextNodes = attachNodeHandlers(canvas.nodes || []);
+        const nextNodes = attachNodeHandlers((canvas.nodes || []).filter((n) => !n.data?.trashed));
         const nodeIds = new Set(nextNodes.map((n) => n.id));
         setNodes(nextNodes);
         setEdges(sanitizeEdges(canvas.edges || [], nodeIds));
@@ -291,7 +291,7 @@ export default function Editor() {
     const nodeIds = new Set(nodesToDelete.map((n) => n.id));
     const edgeIds = new Set(edgesToDelete.map((e) => e.id));
 
-    setNodes((nds) => nds.filter((n) => !nodeIds.has(n.id)));
+    setNodes((nds) => nds.map((n) => nodeIds.has(n.id) ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
     setEdges((eds) => eds.filter((e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target)));
     setInspectorOpen(false);
     setSelectedNodeId(null);
@@ -664,8 +664,12 @@ export default function Editor() {
         {activeTab === 'nodes' ? (
           <div className="absolute inset-0 z-10 h-full w-full" style={{ backgroundColor: '#0c1324', backgroundImage: 'radial-gradient(rgba(144, 143, 160, 0.25) 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
               <ReactFlow
-                nodes={nodes}
-                edges={edges}
+                nodes={nodes.filter((n) => !n.data?.trashed)}
+                edges={edges.filter((e) => {
+                  const sourceNode = nodes.find((n) => n.id === e.source);
+                  const targetNode = nodes.find((n) => n.id === e.target);
+                  return sourceNode && targetNode && !sourceNode.data?.trashed && !targetNode.data?.trashed;
+                })}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
@@ -698,7 +702,7 @@ export default function Editor() {
                 updateNodeData={updateNodeData}
                 addNode={addNode}
                 deleteNode={(nodeId) => {
-                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
                   setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
                 }}
               />
@@ -711,7 +715,7 @@ export default function Editor() {
                 updateNodeData={updateNodeData}
                 addNode={addNode}
                 deleteNode={(nodeId) => {
-                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
                   setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
                 }}
               />
@@ -724,12 +728,18 @@ export default function Editor() {
                 updateNodeData={updateNodeData}
                 addNode={addNode}
                 deleteNode={(nodeId) => {
-                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
                   setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
                 }}
               />
             )}
-            {activeTab === 'graveyard' && <Graveyard project={project} />}
+            {activeTab === 'graveyard' && (
+              <Graveyard
+                project={project}
+                nodes={nodes}
+                updateNodeData={updateNodeData}
+              />
+            )}
           </div>
         )}
       </main>
