@@ -52,8 +52,12 @@ export const api = {
   createProject: (payload) => request('/api/projects', { method: 'POST', body: payload }),
   updateProject: (id, payload) => request(`/api/projects/${id}`, { method: 'PUT', body: payload }),
   deleteProject: (id) => request(`/api/projects/${id}`, { method: 'DELETE' }),
+  getDashboardStats: () => request('/api/projects/stats/dashboard'),
+  getActivityHeatmap: () => request('/api/projects/stats/activity'),
 
   getPublicProject: (id) => request(`/api/community/projects/${id}`, { auth: false }),
+  listPublicProjects: (page = 1, limit = 20) =>
+    request(`/api/community/projects?page=${page}&limit=${limit}`, { auth: false }),
 };
 
 export { getToken };

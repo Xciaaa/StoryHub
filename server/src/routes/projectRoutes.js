@@ -11,5 +11,7 @@ router.get('/', projectController.listProjects);
 router.get('/:id', projectController.getProject);
 router.put('/:id', projectController.updateProject);
 router.delete('/:id', projectController.deleteProject);
+router.get('/stats/dashboard', projectController.getDashboardStats);
+router.get('/stats/activity', projectController.getActivityHeatmap);
 
 module.exports = router;

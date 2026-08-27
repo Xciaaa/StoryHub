@@ -122,6 +122,16 @@ const listPublicProjects = asyncHandler(async (req, res) => {
   return res.json(data);
 });
 
+const getDashboardStats = asyncHandler(async (req, res) => {
+  const stats = await projectService.getDashboardStats(req.user.id);
+  return res.json(stats);
+});
+
+const getActivityHeatmap = asyncHandler(async (req, res) => {
+  const data = await projectService.getActivityHeatmap(req.user.id);
+  return res.json(data);
+});
+
 module.exports = {
   createProject,
   listProjects,
@@ -130,4 +140,6 @@ module.exports = {
   deleteProject,
   getPublicProject,
   listPublicProjects,
+  getDashboardStats,
+  getActivityHeatmap,
 };

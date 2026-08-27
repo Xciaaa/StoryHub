@@ -3,6 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
+function getNodeCount(canvasData) {
+  if (!canvasData) return 0;
+  return (canvasData.nodes || []).length;
+}
+
+function getThumbnailStyle(index) {
+  const thumbnails = [
+    'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3))',
+    'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3))',
+    'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.3))',
+  ];
+  return thumbnails[index % thumbnails.length];
+}
+
+const GENRES = ['Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
+const VISIBLE_CARDS = 6;
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -11,14 +28,25 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [genre, setGenre] = useState(GENRES[0]);
+  const [stats, setStats] = useState({ totalNodes: 0, connections: 0, wordsMapped: 0, editsThisWeek: 0 });
+  const [activity, setActivity] = useState([]);
 
   const loadProjects = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await api.listProjects();
-      setProjects(data);
+      const [projectsData, statsData, activityData] = await Promise.all([
+        api.listProjects(),
+        api.getDashboardStats().catch(() => null),
+        api.getActivityHeatmap().catch(() => []),
+      ]);
+      setProjects(projectsData);
+      if (statsData) setStats(statsData);
+      setActivity(activityData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -30,15 +58,32 @@ export default function Dashboard() {
     loadProjects();
   }, []);
 
+  const openModal = () => {
+    setTitle('');
+    setDescription('');
+    setGenre(GENRES[0]);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!title.trim()) return;
     setCreating(true);
     try {
-      const project = await api.createProject({ title: newTitle.trim() });
+      const project = await api.createProject({
+        title: title.trim(),
+        description: description.trim() || null,
+        canvasData: { nodes: [], edges: [] },
+      });
+      closeModal();
       navigate(`/editor/${project.id}`);
     } catch (err) {
       setError(err.message);
+    } finally {
       setCreating(false);
     }
   };
@@ -48,79 +93,304 @@ export default function Dashboard() {
     try {
       await api.deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      loadProjects();
     } catch (err) {
       setError(err.message);
     }
   };
 
+  const totalNodes = projects.reduce((sum, p) => sum + (p.node_count ?? getNodeCount(p.canvas_data)), 0);
+  const totalEdges = projects.reduce((sum, p) => sum + ((p.canvas_data?.edges || []).length), 0);
+  const visibleProjects = projects.slice(0, VISIBLE_CARDS);
+  const hasMore = projects.length > VISIBLE_CARDS;
+
+  const heatmapData = activity.length > 0 ? activity : Array.from({ length: 28 }).map((_, i) => ({ date: new Date(Date.now() - i * 86400000).toISOString(), count: 0 }));
+
+  const maxCount = Math.max(1, ...heatmapData.map((d) => d.count));
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-900 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Lore Canvas</h1>
-        <div className="flex items-center gap-4 text-sm text-neutral-400">
-          <Link to="/community" className="hover:text-neutral-200">
-            Community
+    <div className="min-h-screen bg-background text-on-background overflow-x-hidden">
+      {/* Top Navigation Bar */}
+      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30 transition-all duration-300">
+        <div className="flex items-center gap-8">
+          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight" style={{ fontSize: '28px' }}>
+            LoreCanvas
           </Link>
-          <span>{user?.username}</span>
-          <button onClick={logout} className="hover:text-neutral-200">
-            Log out
-          </button>
+          <div className="hidden md:flex gap-6">
+            <span className="text-indigo-electric font-bold border-b-2 border-indigo-electric pb-1 font-label-md text-label-md">
+              Dashboard
+            </span>
+            {projects.length > 0 ? (
+              <Link to={`/editor/${projects[0].id}`} className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md">
+                Canvas
+              </Link>
+            ) : (
+              <span className="text-on-surface-variant/50 font-label-md text-label-md cursor-not-allowed">Canvas</span>
+            )}
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md">
+              Community
+            </Link>
+          </div>
         </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <form onSubmit={handleCreate} className="flex gap-2 mb-8">
-          <input
-            type="text"
-            placeholder="New project title…"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 rounded-md bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-500"
-          />
-          <button
-            type="submit"
-            disabled={creating}
-            className="rounded-md bg-neutral-100 text-neutral-900 px-4 py-2 text-sm font-medium hover:bg-white disabled:opacity-50"
-          >
-            {creating ? 'Creating…' : 'New project'}
+        <div className="flex items-center gap-4">
+          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+            <span className="material-symbols-outlined">search</span>
           </button>
-        </form>
+          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+            <span className="material-symbols-outlined">notifications</span>
+          </button>
+          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+            <span className="material-symbols-outlined">settings</span>
+          </button>
+          <div className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30 ml-2">
+            <img
+              alt="User profile"
+              className="w-full h-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q"
+            />
+          </div>
+        </div>
+      </nav>
 
-        {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {/* Main Content */}
+      <main className="md:ml-24 pt-24 pb-12 px-margin-mobile md:px-margin-desktop min-h-screen">
+        {/* Hero Section */}
+        <section className="mb-12">
+          <h1 className="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface mb-6">Welcome back, {user?.username || 'Architect'}</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-panel p-6 rounded-xl flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-electric/5 to-transparent pointer-events-none" />
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Nodes Created</span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-headline-lg text-headline-lg text-primary">{stats.totalNodes.toLocaleString()}</span>
+                <span className="font-label-sm text-label-sm text-indigo-electric">+{stats.editsThisWeek} this week</span>
+              </div>
+            </div>
+            <div className="glass-panel p-6 rounded-xl flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-glow/5 to-transparent pointer-events-none" />
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Active Connections</span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-headline-lg text-headline-lg text-secondary">{stats.connections.toLocaleString()}</span>
+                <span className="font-label-sm text-label-sm text-indigo-electric">+{stats.editsThisWeek} this week</span>
+              </div>
+            </div>
+            <div className="glass-panel p-6 rounded-xl flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-electric/5 to-transparent pointer-events-none" />
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Words Mapped</span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-headline-lg text-headline-lg text-primary">{stats.wordsMapped.toLocaleString()}</span>
+                <span className="font-label-sm text-label-sm text-indigo-electric">+{Math.round(stats.wordsMapped * 0.02).toLocaleString()} this week</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {loading ? (
-          <p className="text-neutral-500 text-sm">Loading projects…</p>
-        ) : projects.length === 0 ? (
-          <p className="text-neutral-500 text-sm">No projects yet — create your first one above.</p>
-        ) : (
-          <ul className="divide-y divide-neutral-900 border border-neutral-900 rounded-md">
-            {projects.map((p) => (
-              <li key={p.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <Link to={`/editor/${p.id}`} className="font-medium hover:underline">
-                    {p.title}
-                  </Link>
-                  <p className="text-xs text-neutral-500">
-                    {p.is_public ? 'Public' : 'Private'} · updated{' '}
-                    {new Date(p.updated_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-3 text-sm">
-                  <Link to={`/editor/${p.id}`} className="text-neutral-400 hover:text-neutral-200">
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="text-red-400/80 hover:text-red-400"
+        {/* Immersive Story Cards */}
+        <section className="mb-16">
+          <div className="flex justify-between items-end mb-6">
+            <h2 className="font-headline-md text-headline-md text-on-surface">Active Universes</h2>
+            <div className="flex items-center gap-4">
+              {hasMore && (
+                <button className="font-label-md text-label-md text-indigo-electric hover:text-primary transition-colors">
+                  View All
+                </button>
+              )}
+              <button onClick={openModal} className="font-label-md text-label-md text-indigo-electric hover:text-primary transition-colors flex items-center gap-1">
+                New Story <span className="material-symbols-outlined text-[18px]">add</span>
+              </button>
+            </div>
+          </div>
+          {error && <p className="text-sm text-error mb-4">{error}</p>}
+          {loading ? (
+            <p className="text-on-surface-variant text-sm">Loading projects…</p>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-on-surface-variant text-sm mb-4">No projects yet — create your first story above.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {visibleProjects.map((p, index) => {
+                const nodeCount = p.node_count ?? getNodeCount(p.canvas_data);
+                const edgeCount = (p.canvas_data?.edges || []).length;
+                const progress = Math.min(100, Math.max(5, (nodeCount / 500) * 100));
+
+                return (
+                  <Link
+                    key={p.id}
+                    to={`/editor/${p.id}`}
+                    className="story-card-hover relative h-[380px] rounded-xl overflow-hidden glass-panel cursor-pointer group block"
                   >
-                    Delete
+                    <div className="absolute inset-0 z-0">
+                      <div
+                        className="absolute inset-0 opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+                        style={{ background: getThumbnailStyle(index) }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-slate-900/60 to-transparent" />
+                    </div>
+                    <div className="relative z-10 p-6 h-full flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/30">
+                          {p.is_public ? 'Public' : 'Private'}
+                        </span>
+                        <div className="w-12 h-12 relative">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path className="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2" />
+                            <path className="text-indigo-electric" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progress}, 100`} strokeWidth="2" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center font-label-sm text-label-sm text-on-surface">
+                            {Math.round(progress)}%
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors truncate">
+                          {p.title}
+                        </h3>
+                        {p.description && (
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 line-clamp-2">{p.description}</p>
+                        )}
+                        <div className="hover-content opacity-0 transform translate-y-4 transition-all duration-300">
+                          <span className="w-full py-2 bg-indigo-electric/90 backdrop-blur-sm text-white rounded-lg font-label-md text-label-md hover:bg-indigo-electric transition-colors border border-indigo-electric/50 text-center block">
+                            Open Canvas
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Activity Heatmap */}
+        <section>
+          <div className="glass-panel rounded-xl p-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="font-headline-md text-headline-md text-on-surface">Lore Activity</h2>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Your creative consistency over the last 30 days.</p>
+              </div>
+              <div className="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+                <span>Less</span>
+                <div className="w-3 h-3 rounded-sm bg-surface-container-high" />
+                <div className="w-3 h-3 rounded-sm bg-indigo-electric/30" />
+                <div className="w-3 h-3 rounded-sm bg-indigo-electric/60" />
+                <div className="w-3 h-3 rounded-sm bg-indigo-electric" />
+                <div className="w-3 h-3 rounded-sm bg-violet-glow" />
+                <span>More</span>
+              </div>
+            </div>
+            <div className="overflow-x-auto pb-4">
+              <div className="grid grid-rows-4 grid-flow-col gap-1 min-w-max">
+                {heatmapData.map((day, i) => {
+                  let intensity = 'bg-surface-container-high';
+                  const ratio = day.count / maxCount;
+                  if (ratio > 0.75) intensity = 'bg-violet-glow';
+                  else if (ratio > 0.5) intensity = 'bg-indigo-electric';
+                  else if (ratio > 0.25) intensity = 'bg-indigo-electric/60';
+                  else if (ratio > 0) intensity = 'bg-indigo-electric/30';
+
+                  return (
+                    <div
+                      key={i}
+                      className={`w-8 h-8 rounded-md ${intensity} heatmap-cell cursor-crosshair`}
+                      title={`${day.count} edits on ${new Date(day.date).toLocaleDateString()}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* New Story Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md" onClick={closeModal} />
+          <div className="relative w-full max-w-lg glass-panel rounded-xl border border-outline/30 shadow-2xl overflow-hidden transition-all duration-300">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h2 className="font-headline-lg text-headline-lg text-on-surface mb-2">Create New Story</h2>
+                  <p className="font-body-md text-body-md text-on-surface-variant">Define the foundation of your next epic journey.</p>
+                </div>
+                <button onClick={closeModal} className="text-on-surface-variant hover:text-primary transition-colors">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form onSubmit={handleCreate} className="space-y-6">
+                {/* Story Title */}
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface block">Story Title</label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full bg-surface-container-highest border border-outline/20 rounded-lg px-4 py-3 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-indigo-electric transition-colors"
+                    placeholder="e.g. The Chronicles of Aetheria"
+                    required
+                  />
+                </div>
+                {/* Genre Selection */}
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface block">Genre</label>
+                  <input
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    className="w-full bg-surface-container-highest border border-outline/20 rounded-lg px-4 py-3 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-indigo-electric transition-colors"
+                    placeholder="Select or type a genre..."
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {GENRES.map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setGenre(g)}
+                        className={`px-3 py-1.5 rounded-full text-label-sm font-label-sm border transition-colors ${
+                          genre === g
+                            ? 'bg-indigo-electric text-white border-indigo-electric'
+                            : 'bg-surface-variant text-on-surface-variant border-outline/10 hover:border-primary/30'
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Description */}
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface block">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full bg-surface-container-highest border border-outline/20 rounded-lg px-4 py-3 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-indigo-electric transition-colors resize-none"
+                    placeholder="Briefly describe the core conflict or setting..."
+                    rows={4}
+                  />
+                </div>
+                {/* Actions */}
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 px-6 py-3 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors border border-outline/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating || !title.trim()}
+                    className="flex-1 px-6 py-3 rounded-lg font-label-md text-label-md bg-indigo-electric text-white hover:bg-indigo-electric/90 transition-colors shadow-lg shadow-indigo-electric/20 disabled:opacity-50"
+                  >
+                    {creating ? 'Creating…' : 'Create Story'}
                   </button>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,24 +4,23 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
 
 const { connectRedis } = require('./config/redis');
 const { pool } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const { passport } = require('./controllers/oauthController');
 
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const oauthRoutes = require('./routes/oauthRoutes');
 
 const app = express();
 
-// --- Security & parsing middleware -----------------------------------
 app.use(helmet());
-app.use(express.json({ limit: '2mb' })); // canvas_data payloads can be sizeable
+app.use(express.json({ limit: '2mb' }));
 
-// CORS: allow the deployed Vercel frontend + local dev.
-// Supports a comma-separated ALLOWED_ORIGINS env var so preview deploys
-// (e.g. Vercel branch URLs) can be added without a code change.
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((o) => o.trim())
@@ -30,7 +29,6 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow non-browser requests (no Origin header) and any whitelisted origin.
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -40,7 +38,18 @@ app.use(
   })
 );
 
-// Basic rate limiting — tighter on auth routes, applied globally as a floor.
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || 'storyhub-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production' },
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -49,32 +58,28 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// --- Routes -------------------------------------------------------------
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', oauthRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/community', communityRoutes);
 
-// 404 fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// Centralized error handler (must be last)
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 
 async function start() {
   try {
-    // Verify Postgres connectivity at boot.
     const client = await pool.connect();
     await client.query('SELECT 1');
     client.release();
     console.log('PostgreSQL connection verified');
 
-    // Redis is a cache — if it's down, the app should still serve requests.
     try {
       await connectRedis();
       console.log('Redis connection verified');

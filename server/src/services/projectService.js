@@ -49,13 +49,21 @@ async function getOwnedProject({ id, userId }) {
 
 async function listProjectsForUser(userId) {
   const result = await query(
-    `SELECT id, title, description, is_public, updated_at
+    `SELECT id, title, description, is_public, canvas_data, updated_at
      FROM projects
      WHERE user_id = $1
      ORDER BY updated_at DESC`,
     [userId]
   );
-  return result.rows;
+  return result.rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    is_public: row.is_public,
+    canvas_data: row.canvas_data || { nodes: [], edges: [] },
+    updated_at: row.updated_at,
+    node_count: (row.canvas_data?.nodes || []).length,
+  }));
 }
 
 /**
@@ -82,6 +90,12 @@ async function updateProject({ id, userId, title, description, canvasData, isPub
 
   if (updated) {
     await deleteCached(publicCacheKey(id));
+    await recordProjectActivity({
+      projectId: id,
+      userId,
+      action: 'update',
+      canvasData: updated.canvas_data || { nodes: [], edges: [] },
+    });
   }
 
   return updated;
@@ -98,6 +112,78 @@ async function deleteProject({ id, userId }) {
   }
 
   return result.rowCount > 0;
+}
+
+async function recordProjectActivity({ projectId, userId, action, canvasData }) {
+  const nodesCount = (canvasData?.nodes || []).length;
+  const edgesCount = (canvasData?.edges || []).length;
+  await query(
+    `INSERT INTO project_activity (project_id, user_id, action, nodes_count, edges_count)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [projectId, userId, action, nodesCount, edgesCount]
+  );
+}
+
+async function getDashboardStats(userId) {
+  const projectsResult = await query(
+    `SELECT id, canvas_data FROM projects WHERE user_id = $1`,
+    [userId]
+  );
+
+  const totalNodes = projectsResult.rows.reduce((sum, p) => sum + ((p.canvas_data?.nodes || []).length), 0);
+  const totalEdges = projectsResult.rows.reduce((sum, p) => sum + ((p.canvas_data?.edges || []).length), 0);
+
+  const activityResult = await query(
+    `SELECT created_at FROM project_activity WHERE user_id = $1 ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const editsThisWeek = activityResult.rows.filter((r) => new Date(r.created_at) >= weekAgo).length;
+
+  const wordCount = Math.round(totalNodes * 47 + totalEdges * 12);
+
+  return {
+    totalNodes,
+    totalEdges,
+    connections: totalEdges,
+    wordsMapped: wordCount,
+    editsThisWeek,
+  };
+}
+
+async function getActivityHeatmap(userId) {
+  const result = await query(
+    `SELECT created_at FROM project_activity WHERE user_id = $1 ORDER BY created_at ASC`,
+    [userId]
+  );
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    days.push(d);
+  }
+
+  const activityMap = new Map();
+  for (const row of result.rows) {
+    const d = new Date(row.created_at);
+    d.setHours(0, 0, 0, 0);
+    const key = d.toISOString();
+    activityMap.set(key, (activityMap.get(key) || 0) + 1);
+  }
+
+  return days.map((d) => ({
+    date: d.toISOString(),
+    count: activityMap.get(d.toISOString()) || 0,
+  }));
 }
 
 /**
@@ -164,4 +250,7 @@ module.exports = {
   deleteProject,
   getPublicProject,
   listPublicProjects,
+  recordProjectActivity,
+  getDashboardStats,
+  getActivityHeatmap,
 };

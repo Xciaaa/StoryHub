@@ -1,10 +1,15 @@
 export default function AuthLayout({ title, subtitle, children }) {
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background text-on-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold mb-1">{title}</h1>
-        {subtitle && <p className="text-neutral-400 text-sm mb-6">{subtitle}</p>}
-        {children}
+        <div className="text-center mb-8">
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Lore Canvas</h1>
+          {subtitle && <p className="text-on-surface-variant text-sm mt-1">{subtitle}</p>}
+        </div>
+        <div className="glass rounded-xl p-6">
+          {title && <h2 className="font-display text-lg font-medium mb-5">{title}</h2>}
+          {children}
+        </div>
       </div>
     </div>
   );
