@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 
 const STATUSES = ['Finalized', 'In Progress', 'Draft'];
 
 export default function Timeline({ project, nodes, updateNodeData, addNode, deleteNode }) {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
+  const editCardRef = useRef(null);
 
   const events = useMemo(() => {
     if (!nodes?.length) return [];
@@ -15,14 +16,18 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
 
   const startEdit = (event, field, value) => {
     setEditingId(event.id);
-    setDraft((prev) => ({ ...prev, [event.id]: { ...prev[event.id], [field]: value || '' } }));
+    setDraft((prev) => {
+      const current = prev[event.id] || { ...(event.data || {}) };
+      return { ...prev, [event.id]: { ...current, [field]: value || '' } };
+    });
   };
 
   const commit = (event) => {
     if (!editingId || editingId !== event.id) return;
     const next = draft[event.id] || {};
-    const updated = { ...(event.data || {}), ...next };
-    updateNodeData(event.id, 'data', updated);
+    Object.entries(next).forEach(([field, value]) => {
+      updateNodeData(event.id, field, value);
+    });
     setEditingId(null);
     setDraft((prev) => {
       const next = { ...prev };
@@ -31,7 +36,14 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
     });
   };
 
+  const commitPending = () => {
+    if (!editingId) return;
+    const event = events.find((e) => e.id === editingId);
+    if (event) commit(event);
+  };
+
   const handleAdd = () => {
+    commitPending();
     const newEvent = {
       id: `node_${Date.now()}`,
       type: 'custom',
@@ -45,6 +57,8 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
       },
     };
     addNode(newEvent);
+    setEditingId(newEvent.id);
+    setDraft((prev) => ({ ...prev, [newEvent.id]: { ...newEvent.data } }));
   };
 
   const handleDelete = (event) => {
@@ -54,6 +68,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
   };
 
   const moveEvent = (index, direction) => {
+    commitPending();
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= events.length) return;
     const current = events[index];
@@ -69,6 +84,20 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
     if (status === 'In Progress') return 'amber';
     return 'outline';
   };
+
+  useEffect(() => {
+    if (!editingId) return;
+    function handleClickOutside(e) {
+      if (editCardRef.current && !editCardRef.current.contains(e.target)) {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return;
+        const event = events.find((ev) => ev.id === editingId);
+        if (event) commit(event);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [editingId, events, commit]);
 
   return (
     <div className="h-full w-full overflow-y-auto custom-scrollbar">
@@ -86,7 +115,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
         ) : (
           <div className="relative">
             {/* Central Line */}
-            <div className="absolute left-4 sm:left-1/2 top-12 bottom-12 w-0.5 timeline-line transform sm:-translate-x-1/2 opacity-60 z-0" />
+            <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 bg-outline-variant/80 transform sm:-translate-x-1/2 z-0" />
 
             {events.map((event, idx) => {
               const data = event.data || {};
@@ -107,7 +136,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           autoFocus
                           value={currentDraft.year || ''}
                           onChange={(e) => startEdit(event, 'year', e.target.value)}
-                          onBlur={() => commit(event)}
+                          
                           onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                           placeholder="Year / Date"
                           className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
@@ -115,7 +144,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                         <input
                           value={currentDraft.label || ''}
                           onChange={(e) => startEdit(event, 'label', e.target.value)}
-                          onBlur={() => commit(event)}
+                          
                           onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                           placeholder="Event title"
                           className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
@@ -123,7 +152,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                         <textarea
                           value={currentDraft.description || ''}
                           onChange={(e) => startEdit(event, 'description', e.target.value)}
-                          onBlur={() => commit(event)}
+                          
                           placeholder="Description"
                           rows={3}
                           className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
@@ -160,7 +189,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             autoFocus
                             value={currentDraft.year || ''}
                             onChange={(e) => startEdit(event, 'year', e.target.value)}
-                            onBlur={() => commit(event)}
+                            
                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                             placeholder="Year / Date"
                             className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
@@ -168,7 +197,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           <input
                             value={currentDraft.label || ''}
                             onChange={(e) => startEdit(event, 'label', e.target.value)}
-                            onBlur={() => commit(event)}
+                            
                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                             placeholder="Event title"
                             className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
@@ -176,7 +205,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           <textarea
                             value={currentDraft.description || ''}
                             onChange={(e) => startEdit(event, 'description', e.target.value)}
-                            onBlur={() => commit(event)}
+                            
                             placeholder="Description"
                             rows={3}
                             className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
@@ -194,7 +223,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                       )}
                     </div>
 
-                    <div className={`glass-panel p-6 rounded-xl border border-outline-variant/20 node-hover-effect transition-all duration-300 relative overflow-hidden ${
+                    <div ref={editCardRef} className={`glass-panel p-6 rounded-xl border border-outline-variant/20 node-hover-effect transition-all duration-300 relative overflow-hidden ${
                       !isFinalized ? 'border-dashed opacity-80 hover:opacity-100' : ''
                     }`}>
                       {isFinalized && <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/50" />}
@@ -205,7 +234,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           <select
                             value={currentDraft.status || 'Draft'}
                             onChange={(e) => startEdit(event, 'status', e.target.value)}
-                            onBlur={() => commit(event)}
+                            
                             className="px-2 py-1 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-black/40 text-on-surface outline-none"
                           >
                             {STATUSES.map((s) => (
@@ -282,12 +311,14 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
 
             {/* Add Node Button */}
             <div className="relative z-10 flex justify-center w-full mt-8">
-              <button
-                onClick={handleAdd}
-                className="w-10 h-10 rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-indigo-electric hover:border-indigo-electric hover:bg-indigo-electric/10 transition-all flex items-center justify-center group z-20"
-              >
-                <span className="material-symbols-outlined group-hover:scale-110 transition-transform">add</span>
-              </button>
+              <div className="absolute left-4 sm:left-1/2 transform sm:-translate-x-1/2">
+                <button
+                  onClick={handleAdd}
+                  className="w-10 h-10 rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-indigo-electric hover:border-indigo-electric hover:bg-indigo-electric/10 transition-all flex items-center justify-center group z-20"
+                >
+                  <span className="material-symbols-outlined group-hover:scale-110 transition-transform">add</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
