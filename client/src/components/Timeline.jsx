@@ -5,6 +5,7 @@ const STATUSES = ['Finalized', 'In Progress', 'Draft'];
 export default function Timeline({ project, nodes, updateNodeData, addNode, deleteNode }) {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const editCardRef = useRef(null);
 
   const events = useMemo(() => {
@@ -62,9 +63,17 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
   };
 
   const handleDelete = (event) => {
-    if (confirm(`Delete "${event.data?.label || 'this event'}"?`)) {
-      deleteNode(event.id);
-    }
+    setDeleteConfirmId(event.id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirmId) return;
+    deleteNode(deleteConfirmId);
+    setDeleteConfirmId(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   const moveEvent = (index, direction) => {
@@ -323,6 +332,38 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (() => {
+        const event = events.find((e) => e.id === deleteConfirmId);
+        return (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+            <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
+              <div className="p-6">
+                <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant">
+                  Delete "{event?.data?.label || 'this event'}"? This cannot be undone.
+                </p>
+              </div>
+              <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 rounded-lg bg-error text-on-error hover:bg-error/90 font-label-md text-label-md transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

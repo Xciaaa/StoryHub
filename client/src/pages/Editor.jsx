@@ -23,7 +23,7 @@ const nodeTypes = { custom: CustomNode };
 const draftKey = (id) => `lorecanvas:draft:${id}`;
 const AUTOSAVE_DELAY_MS = 1500;
 
-function FloatingToolbar({ onAddNode, onSave, saveStatus }) {
+function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character' }) {
   const { zoomTo } = useReactFlow();
   const zoom = useStore((state) => state.transform[2]);
   const roundedZoom = Math.round(zoom * 100 / 10) * 10;
@@ -51,7 +51,12 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus }) {
       </button>
       <div className="w-px h-5 bg-outline-variant/50 mx-1" />
       <button
-        onClick={onAddNode}
+        onClick={() => onAddNode({
+          id: `node_${Date.now()}`,
+          type: 'custom',
+          position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
+          data: { label: `New ${nodeType}`, type: nodeType, description: '' },
+        })}
         className="p-2 ml-1 bg-indigo-electric text-white rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
       >
         <span className="material-symbols-outlined text-[20px]">add</span>
@@ -127,6 +132,7 @@ export default function Editor() {
   const [activeTab, setActiveTab] = useState('nodes');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [newNodeType, setNewNodeType] = useState('Character');
 
   const isFirstLoad = useRef(true);
   const savingRef = useRef(false);
@@ -557,13 +563,33 @@ export default function Editor() {
             <p className="font-body-md text-[14px] text-on-surface-variant">Novel - Sci-Fi</p>
           </div>
         </div>
-        <button
-          onClick={addNode}
-          className="mb-6 w-full py-2.5 bg-indigo-electric text-white rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          New Entity
-        </button>
+          <div className="mb-6 flex flex-col gap-2">
+            <select
+              value={newNodeType}
+              onChange={(e) => setNewNodeType(e.target.value)}
+              className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm"
+            >
+              <option value="Character">Character</option>
+              <option value="Location">Location</option>
+              <option value="Plot Event">Plot Event</option>
+              <option value="Lore">Lore</option>
+              <option value="Item">Item</option>
+              <option value="Faction">Faction</option>
+              <option value="Theme">Theme</option>
+            </select>
+            <button
+              onClick={() => addNode({
+                id: `node_${Date.now()}`,
+                type: 'custom',
+                position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
+                data: { label: `New ${newNodeType}`, type: newNodeType, description: '' },
+              })}
+              className="w-full py-2.5 bg-indigo-electric text-white rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              New Entity
+            </button>
+          </div>
         <nav className="flex-1 flex flex-col gap-1.5">
           <button
             onClick={() => setActiveTab('nodes')}
@@ -659,7 +685,7 @@ export default function Editor() {
               >
               <Controls className="hidden" />
               {activeTab === 'nodes' && (
-                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} />
+                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} />
               )}
             </ReactFlow>
           </div>
@@ -677,8 +703,32 @@ export default function Editor() {
                 }}
               />
             )}
-            {activeTab === 'atlas' && <Atlas project={project} />}
-            {activeTab === 'codex' && <Codex project={project} />}
+            {activeTab === 'atlas' && (
+              <Atlas
+                project={project}
+                nodes={nodes}
+                edges={edges}
+                updateNodeData={updateNodeData}
+                addNode={addNode}
+                deleteNode={(nodeId) => {
+                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                }}
+              />
+            )}
+            {activeTab === 'codex' && (
+              <Codex
+                project={project}
+                nodes={nodes}
+                edges={edges}
+                updateNodeData={updateNodeData}
+                addNode={addNode}
+                deleteNode={(nodeId) => {
+                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                }}
+              />
+            )}
             {activeTab === 'graveyard' && <Graveyard project={project} />}
           </div>
         )}

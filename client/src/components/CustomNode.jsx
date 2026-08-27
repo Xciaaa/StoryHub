@@ -1,12 +1,16 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position } from 'reactflow';
 
-const TYPES = ['Character', 'Location', 'Plot Event'];
+const TYPES = ['Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'];
 
 const typeStyles = {
   Character: 'bg-violet-glow/20 text-violet-glow border-violet-glow/30',
   Location: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'Plot Event': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  Lore: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+  Item: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  Faction: 'bg-red-500/20 text-red-400 border-red-500/30',
+  Theme: 'bg-indigo-electric/20 text-indigo-electric border-indigo-electric/30',
   default: 'bg-surface-tint/20 text-surface-tint border-outline-variant/30',
 };
 
