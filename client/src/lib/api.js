@@ -60,4 +60,4 @@ export const api = {
     request(`/api/community/projects?page=${page}&limit=${limit}`, { auth: false }),
 };
 
-export { getToken };
+export { API_BASE, getToken };

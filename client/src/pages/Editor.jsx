@@ -1,21 +1,72 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactFlow, {
   Background,
-  MiniMap,
   Controls,
   addEdge,
   applyNodeChanges,
   applyEdgeChanges,
-  Handle,
-  Position,
+  useReactFlow,
+  useStore,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { api } from '../lib/api';
+import CustomNode from '../components/CustomNode';
+import Timeline from '../components/Timeline';
+import Atlas from '../components/Atlas';
+import Codex from '../components/Codex';
+import Graveyard from '../components/Graveyard';
+import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
+
+const nodeTypes = { custom: CustomNode };
 
 const draftKey = (id) => `lorecanvas:draft:${id}`;
 const AUTOSAVE_DELAY_MS = 1500;
+
+function FloatingToolbar({ onAddNode, onSave, saveStatus }) {
+  const { zoomTo } = useReactFlow();
+  const zoom = useStore((state) => state.transform[2]);
+  const roundedZoom = Math.round(zoom * 100 / 10) * 10;
+
+  const handleZoomIn = () => {
+    const next = Math.min(400, roundedZoom + 10);
+    zoomTo(next / 100, { duration: 150 });
+  };
+
+  const handleZoomOut = () => {
+    const next = Math.max(10, roundedZoom - 10);
+    zoomTo(next / 100, { duration: 150 });
+  };
+
+  const zoomPercent = `${roundedZoom}%`;
+
+  return (
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
+      <button onClick={handleZoomOut} className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
+        <span className="material-symbols-outlined text-[20px]">zoom_out</span>
+      </button>
+      <span className="font-label-md text-[13px] font-medium text-on-surface-variant px-3 min-w-[60px] text-center">{zoomPercent}</span>
+      <button onClick={handleZoomIn} className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
+        <span className="material-symbols-outlined text-[20px]">zoom_in</span>
+      </button>
+      <div className="w-px h-5 bg-outline-variant/50 mx-1" />
+      <button
+        onClick={onAddNode}
+        className="p-2 ml-1 bg-indigo-electric text-white rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
+      >
+        <span className="material-symbols-outlined text-[20px]">add</span>
+      </button>
+      <div className="w-px h-5 bg-outline-variant/50 mx-1" />
+      <button
+        onClick={onSave}
+        disabled={saveStatus === 'saving'}
+        className="px-3 py-1.5 bg-emerald-600 text-white rounded-full hover:bg-emerald-500 transition-all text-[12px] font-semibold disabled:opacity-50 border border-emerald-400/30"
+      >
+        {saveStatus === 'saving' ? 'Saving…' : 'Save'}
+      </button>
+    </div>
+  );
+}
 
 function loadDraft(id) {
   try {
@@ -27,53 +78,33 @@ function loadDraft(id) {
 }
 
 function saveDraft(id, canvasData) {
-  localStorage.setItem(draftKey(id), JSON.stringify({ canvasData, savedAt: Date.now() }));
+  try {
+    const serializable = {
+      nodes: (canvasData.nodes || []).map(({ data, ...rest }) => ({
+        ...rest,
+        data: data && typeof data === 'object' ? { ...data } : data,
+      })),
+      edges: canvasData.edges || [],
+    };
+    localStorage.setItem(draftKey(id), JSON.stringify({ canvasData: serializable, savedAt: Date.now() }));
+  } catch {
+    // ignore storage/serialization errors
+  }
 }
 
 function clearDraft(id) {
   localStorage.removeItem(draftKey(id));
 }
 
-const typeStyles = {
-  Character: 'bg-violet-glow/20 text-violet-glow border-violet-glow/30',
-  Location: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'Plot Event': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  default: 'bg-surface-tint/20 text-surface-tint border-outline-variant/30',
-};
-
-function CustomNode({ data, selected }) {
-  const safeData = data || {};
-  const typeClass = typeStyles[safeData.type] || typeStyles.default;
-
-  return (
-    <div
-      className={`node-card rounded-xl p-5 cursor-pointer w-[280px] ${
-        selected ? 'active' : ''
-      }`}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span className={`px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border ${typeClass}`}>
-          {safeData.type || 'Entity'}
-        </span>
-        <span className="material-symbols-outlined text-outline text-[18px] hover:text-on-surface transition-colors">
-          more_horiz
-        </span>
-      </div>
-      <h3 className="font-headline-md text-[22px] font-semibold text-on-surface mb-2 truncate">
-        {safeData.label || 'Untitled'}
-      </h3>
-      {safeData.description && (
-        <p className="font-body-md text-[14px] leading-relaxed text-on-surface-variant line-clamp-3">
-          {safeData.description}
-        </p>
-      )}
-      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-indigo-electric" />
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-indigo-electric" />
-    </div>
-  );
+function serializeCanvas({ nodes, edges }) {
+  return {
+    nodes: (nodes || []).map(({ data, ...rest }) => ({
+      ...rest,
+      data: data && typeof data === 'object' ? { ...data } : data,
+    })),
+    edges: edges || [],
+  };
 }
-
-const nodeTypes = { custom: CustomNode };
 
 export default function Editor() {
   const { id } = useParams();
@@ -87,11 +118,18 @@ export default function Editor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle');
-  const [selectedNode, setSelectedNode] = useState(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const selectedNode = useMemo(() => nodes.find((n) => n.id === selectedNodeId) || null, [nodes, selectedNodeId]);
+  const selectedEdge = useMemo(() => edges.find((e) => e.id === selectedEdgeId) || null, [edges, selectedEdgeId]);
   const [activeTab, setActiveTab] = useState('nodes');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const isFirstLoad = useRef(true);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!id) {
@@ -110,17 +148,28 @@ export default function Editor() {
         if (cancelled) return;
 
         const draft = loadDraft(id);
-        const canvas = draft?.canvasData || server.canvas_data || { nodes: [], edges: [] };
+        const hasDraftContent = Boolean(draft?.canvasData && (draft.canvasData.nodes?.length || draft.canvasData.edges?.length));
+        const canvas = hasDraftContent ? draft.canvasData : (server.canvas_data || { nodes: [], edges: [] });
+
+        console.log('[Editor] load', { id, draft: !!draft, hasDraftContent, serverNodes: (server.canvas_data?.nodes || []).length, canvasNodes: (canvas.nodes || []).length });
 
         setProject(server);
         setTitle(server.title);
         setIsPublic(server.is_public);
-        setNodes((canvas.nodes || []).map((n) => ({ ...n, type: 'custom', data: n.data || {} })));
-        setEdges(canvas.edges || []);
+        const nextNodes = attachNodeHandlers(canvas.nodes || []);
+        const nodeIds = new Set(nextNodes.map((n) => n.id));
+        setNodes(nextNodes);
+        setEdges(sanitizeEdges(canvas.edges || [], nodeIds));
 
         if (draft) setSaveStatus('offline');
       } catch (err) {
-        if (!cancelled) setError(err.message || 'Failed to load project');
+        if (!cancelled) {
+          if (err.status === 401) {
+            handleSessionExpired();
+          } else {
+            setError(err.message || 'Failed to load project');
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -132,30 +181,176 @@ export default function Editor() {
 
   const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
   const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
-  const onConnect = useCallback((connection) => setEdges((eds) => addEdge(connection, eds)), []);
+  const onConnect = useCallback((connection) => {
+    const sourceNode = nodes.find((n) => n.id === connection.source);
+    const targetNode = nodes.find((n) => n.id === connection.target);
+    const sourceType = sourceNode?.data?.type || 'Entity';
+    const targetType = targetNode?.data?.type || 'Entity';
+    const defaultLabel = `${sourceType} → ${targetType}`;
+    setEdges((eds) => addEdge({ ...connection, label: defaultLabel, labelStyle: { fill: '#908fa0', fontSize: 11 }, labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' }, labelBgPadding: [4, 2], labelBgBorderRadius: 4 }, eds));
+  }, [nodes]);
 
-  const onNodeClick = useCallback((_, node) => {
-    setSelectedNode(node);
-    setInspectorOpen(true);
+  const sanitizeEdges = useCallback((eds, nodeIds) => {
+    const ids = new Set(nodeIds);
+    return eds.filter((e) => {
+      if (e.source && !ids.has(e.source)) return false;
+      if (e.target && !ids.has(e.target)) return false;
+      return true;
+    });
   }, []);
 
-  const updateSelectedNode = useCallback((updates) => {
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === selectedNode.id ? { ...n, ...updates, data: { ...n.data, ...updates.data } } : n
-      )
-    );
-    setSelectedNode((prev) => ({ ...prev, ...updates, data: { ...prev.data, ...updates.data } }));
-  }, [selectedNode]);
+  useEffect(() => {
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    setEdges((eds) => sanitizeEdges(eds, nodeIds));
+  }, [nodes, sanitizeEdges]);
 
-  const addNode = () => {
-    const newNode = {
+  const onNodeClick = useCallback((_, node) => {
+    setSelectedNodeId(node.id);
+    setInspectorOpen(true);
+    setSelectedEdgeId(null);
+  }, []);
+
+  const onEdgeClick = useCallback((_, edge) => {
+    setSelectedEdgeId(edge.id);
+    setInspectorOpen(true);
+    setSelectedNodeId(null);
+  }, []);
+
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
+
+  const updateNodeData = useCallback((nodeId, field, value) => {
+    setNodes((nds) =>
+      nds.map((n) => (n.id === nodeId ? { ...n, data: { ...(n.data || {}), [field]: value } } : n))
+    );
+  }, []);
+
+  const attachNodeHandlers = useCallback((nds) => {
+    return nds.map((n) => {
+      const safePosition = {
+        x: typeof n.position?.x === 'number' && !Number.isNaN(n.position.x) ? n.position.x : 0,
+        y: typeof n.position?.y === 'number' && !Number.isNaN(n.position.y) ? n.position.y : 0,
+      };
+      return {
+        ...n,
+        position: safePosition,
+        type: n.type || 'custom',
+        data: {
+          ...(n.data || {}),
+          onChange: (field, value) => updateNodeData(n.id, field, value),
+          onDelete: () => {
+            setPendingDelete({
+              nodes: [n],
+              edges: [],
+            });
+          },
+        },
+      };
+    });
+  }, [updateNodeData, selectedNodeId]);
+
+  const deleteSelected = useCallback(() => {
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+    const selectedNodes = currentNodes.filter((n) => n.selected);
+    const selectedEdges = currentEdges.filter((e) => e.selected);
+
+    if (!selectedNodes.length && !selectedEdges.length) return;
+
+    setPendingDelete({
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    });
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (pendingDelete) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (document.activeElement?.isContentEditable) return;
+        deleteSelected();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [deleteSelected, pendingDelete]);
+
+  const confirmDelete = useCallback(() => {
+    if (!pendingDelete) return;
+    const { nodes: nodesToDelete, edges: edgesToDelete } = pendingDelete;
+    const nodeIds = new Set(nodesToDelete.map((n) => n.id));
+    const edgeIds = new Set(edgesToDelete.map((e) => e.id));
+
+    setNodes((nds) => nds.filter((n) => !nodeIds.has(n.id)));
+    setEdges((eds) => eds.filter((e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target)));
+    setInspectorOpen(false);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setPendingDelete(null);
+  }, [pendingDelete]);
+
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null);
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && pendingDelete) {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (document.activeElement?.isContentEditable) return;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          confirmDelete();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelDelete();
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pendingDelete, confirmDelete, cancelDelete]);
+
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    return () => {
+      if (!id || !hasUnsavedChanges) return;
+      try {
+        const payload = serializeCanvas({ nodes, edges });
+        const body = JSON.stringify({ canvasData: payload });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(`${API_BASE}/api/projects/${id}`, body);
+        }
+      } catch {
+        // ignore cleanup errors
+      }
+    };
+  }, [id, hasUnsavedChanges, nodes, edges]);
+
+  const addNode = (customNode) => {
+    const newNode = customNode || {
       id: `node_${Date.now()}`,
       type: 'custom',
       position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
-      data: { label: 'New entity', type: 'Entity', description: '' },
+      data: { label: 'New entity', type: 'Character', description: '' },
     };
-    setNodes((nds) => [...nds, newNode]);
+    setNodes((nds) => attachNodeHandlers([...nds, newNode]));
   };
 
   useEffect(() => {
@@ -164,27 +359,79 @@ export default function Editor() {
       return;
     }
     saveDraft(id, { nodes, edges });
+    setHasUnsavedChanges(true);
+    console.log('[Editor] draft saved', { id, nodeCount: nodes.length, edgeCount: edges.length });
   }, [id, nodes, edges]);
+
+  const handleSessionExpired = useCallback(() => {
+    setSessionExpired(true);
+    setSaveStatus('idle');
+    savingRef.current = false;
+    localStorage.removeItem('token');
+  }, []);
+
+  const manualSave = useCallback(async () => {
+    if (!id || !navigator.onLine || savingRef.current) return;
+    if (sessionExpired) return;
+    savingRef.current = true;
+    console.log('[Editor] manual save start', { nodeCount: nodes.length, edgeCount: edges.length });
+    setSaveStatus('saving');
+    try {
+      const payload = serializeCanvas({ nodes, edges });
+      console.log('[Editor] manual save payload', payload);
+      const updated = await api.updateProject(id, {
+        canvasData: payload,
+      });
+      console.log('[Editor] manual save success', updated);
+      setProject(updated);
+      clearDraft(id);
+      setSaveStatus('saved');
+      setHasUnsavedChanges(false);
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error('[Editor] manual save failed', err);
+      if (err.status === 401) {
+        handleSessionExpired();
+        return;
+      }
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [id, nodes, edges, sessionExpired, handleSessionExpired]);
 
   useDebouncedEffect(
     () => {
-      if (isFirstLoad.current || loading || !id) return;
+      if (isFirstLoad.current || loading || !id || savingRef.current || sessionExpired) return;
 
       async function sync() {
         if (!navigator.onLine) {
           setSaveStatus('offline');
           return;
         }
+        savingRef.current = true;
         setSaveStatus('saving');
         try {
+          const payload = serializeCanvas({ nodes, edges });
+          console.log('[Editor] autosave start', { nodeCount: payload.nodes.length, edgeCount: payload.edges.length });
           const updated = await api.updateProject(id, {
-            canvasData: { nodes, edges },
+            canvasData: payload,
           });
+          console.log('[Editor] autosave success');
           setProject(updated);
           clearDraft(id);
           setSaveStatus('saved');
-        } catch {
+          setHasUnsavedChanges(false);
+        } catch (err) {
+          console.error('[Editor] autosave failed', err);
+          if (err.status === 401) {
+            handleSessionExpired();
+            return;
+          }
           setSaveStatus('error');
+        } finally {
+          savingRef.current = false;
         }
       }
       sync();
@@ -194,36 +441,39 @@ export default function Editor() {
   );
 
   const handleTitleBlur = async () => {
-    if (!title.trim() || title === project?.title || !id) return;
+    if (!title.trim() || title === project?.title || !id || savingRef.current || sessionExpired) return;
+    savingRef.current = true;
     try {
       const updated = await api.updateProject(id, { title: title.trim() });
       setProject(updated);
     } catch (err) {
+      if (err.status === 401) {
+        handleSessionExpired();
+        return;
+      }
       setError(err.message);
+    } finally {
+      savingRef.current = false;
     }
   };
 
   const handleTogglePublic = async () => {
-    if (!id) return;
+    if (!id || savingRef.current || sessionExpired) return;
+    savingRef.current = true;
     const next = !isPublic;
     setIsPublic(next);
     try {
       const updated = await api.updateProject(id, { isPublic: next });
       setProject(updated);
     } catch (err) {
+      if (err.status === 401) {
+        handleSessionExpired();
+        return;
+      }
       setIsPublic(!next);
       setError(err.message);
-    }
-  };
-
-  const backlinks = nodes.filter((n) =>
-    edges.some((e) => e.target === selectedNode?.id && e.source === n.id)
-  );
-
-  const handleBacklinkClick = (nodeId) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (node) {
-      setSelectedNode(node);
+    } finally {
+      savingRef.current = false;
     }
   };
 
@@ -255,9 +505,9 @@ export default function Editor() {
   }[saveStatus];
 
   return (
-    <div className="h-screen w-screen bg-background text-on-background flex flex-col font-body-md text-body-md overflow-hidden">
+    <div className="h-screen w-screen bg-background text-on-background font-body-md text-body-md overflow-hidden grid grid-rows-[auto_1fr]">
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
+      <nav className="flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
         <div className="flex items-center gap-8">
           <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
@@ -291,8 +541,9 @@ export default function Editor() {
         </div>
       </nav>
 
-      {/* Side Navigation */}
-      <aside className="fixed left-0 top-20 bottom-6 z-40 flex flex-col p-4 w-panel-width ml-6 glass-strong border border-outline-variant/30 shadow-lg rounded-xl">
+      <div className="grid grid-cols-[320px_1fr] h-full">
+        {/* Side Navigation */}
+        <aside className="flex flex-col p-4 glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full">
         <div className="flex items-center gap-4 mb-8 p-2">
           <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm">
             <img
@@ -322,7 +573,7 @@ export default function Editor() {
                 : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
             }`}
           >
-            <span className="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+            <span className="material-symbols-outlined">account_tree</span>
             Nodes
           </button>
           <button
@@ -333,7 +584,7 @@ export default function Editor() {
                 : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
             }`}
           >
-            <span className="material-symbols-outlined" data-icon="event_note">event_note</span>
+            <span className="material-symbols-outlined">event_note</span>
             Timeline
           </button>
           <button
@@ -344,7 +595,7 @@ export default function Editor() {
                 : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
             }`}
           >
-            <span className="material-symbols-outlined" data-icon="map">map</span>
+            <span className="material-symbols-outlined">map</span>
             Atlas
           </button>
           <button
@@ -355,7 +606,7 @@ export default function Editor() {
                 : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
             }`}
           >
-            <span className="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+            <span className="material-symbols-outlined">menu_book</span>
             Codex
           </button>
           <button
@@ -366,112 +617,91 @@ export default function Editor() {
                 : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
             }`}
           >
-            <span className="material-symbols-outlined" data-icon="delete">delete</span>
+            <span className="material-symbols-outlined">delete</span>
             Graveyard
           </button>
         </nav>
         <div className="mt-auto border-t border-outline-variant/30 pt-4 flex flex-col gap-1.5">
           <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
-            <span className="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+            <span className="material-symbols-outlined text-[20px]">help</span>
             Help
           </button>
           <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
-            <span className="material-symbols-outlined text-[20px]" data-icon="rate_review">rate_review</span>
+            <span className="material-symbols-outlined text-[20px]">rate_review</span>
             Feedback
           </button>
         </div>
       </aside>
 
       {/* Main Canvas */}
-      <main className="flex-1 relative canvas-bg ml-[calc(320px+48px)] mt-16 overflow-hidden">
+      <main className="flex-1 relative overflow-hidden h-full">
         {activeTab === 'nodes' ? (
-          <div className="absolute inset-0 z-10" style={{ width: '100%', height: '100%' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              fitView
-              nodeTypes={nodeTypes}
-              defaultEdgeOptions={{
-                style: { stroke: 'url(#indigo-violet-gradient)', strokeWidth: 1.5 },
-                type: 'smoothstep',
-              }}
-            >
-              <Background variant="dots" gap={32} size={1} color="rgba(144, 143, 160, 0.3)" />
+          <div className="absolute inset-0 z-10 h-full w-full" style={{ backgroundColor: '#0c1324', backgroundImage: 'radial-gradient(rgba(144, 143, 160, 0.25) 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={onNodeClick}
+                onEdgeClick={onEdgeClick}
+                fitView={{ padding: 0.2 }}
+                nodeTypes={nodeTypes}
+                defaultEdgeOptions={{
+                  style: { stroke: '#6366f1', strokeWidth: 2 },
+                  type: 'default',
+                  labelStyle: { fill: '#908fa0', fontSize: 11 },
+                  labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
+                  labelBgPadding: [4, 2],
+                  labelBgBorderRadius: 4,
+                  selectable: true,
+                }}
+              >
               <Controls className="hidden" />
-              <MiniMap
-                pannable
-                zoomable
-                className="glass-strong rounded-lg"
-                nodeColor={() => 'rgba(99, 102, 241, 0.5)'}
-                maskColor="rgba(12, 19, 36, 0.8)"
-              />
+              {activeTab === 'nodes' && (
+                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} />
+              )}
             </ReactFlow>
           </div>
         ) : (
           <div className="absolute inset-0 z-10 overflow-y-auto">
-            {activeTab === 'timeline' && <Timeline project={project} />}
+            {activeTab === 'timeline' && (
+              <Timeline
+                project={project}
+                nodes={nodes}
+                updateNodeData={updateNodeData}
+                addNode={addNode}
+                deleteNode={(nodeId) => {
+                  setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                  setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                }}
+              />
+            )}
             {activeTab === 'atlas' && <Atlas project={project} />}
             {activeTab === 'codex' && <Codex project={project} />}
             {activeTab === 'graveyard' && <Graveyard project={project} />}
           </div>
         )}
-
-        {activeTab === 'nodes' && (
-          <>
-            {/* Floating Controls: Zoom/Add */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
-              <button className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
-                <span className="material-symbols-outlined text-[20px]">zoom_out</span>
-              </button>
-              <span className="font-label-md text-[13px] font-medium text-on-surface-variant px-3 min-w-[60px] text-center">100%</span>
-              <button className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
-                <span className="material-symbols-outlined text-[20px]">zoom_in</span>
-              </button>
-              <div className="w-px h-5 bg-outline-variant/50 mx-1" />
-              <button
-                onClick={addNode}
-                className="p-2 ml-1 bg-indigo-electric text-white rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
-              >
-                <span className="material-symbols-outlined text-[20px]">add</span>
-              </button>
-            </div>
-
-            {/* Floating Minimap */}
-            <div className="absolute bottom-8 right-8 w-48 h-32 rounded-xl floating-glass border border-outline-variant/30 z-20 overflow-hidden shadow-xl p-2.5">
-              <div className="w-full h-full border border-outline-variant/20 rounded-lg relative bg-zinc-950/60 shadow-inner">
-                <div className="absolute top-[20%] left-[10%] w-[60%] h-[50%] border-2 border-indigo-electric/60 bg-indigo-electric/10 rounded-sm shadow-[0_0_8px_rgba(79,70,229,0.2)]" />
-                <div className="absolute top-[30%] left-[25%] w-2 h-2 rounded-full bg-violet-glow shadow-[0_0_4px_rgba(124,58,237,0.8)]" />
-                <div className="absolute top-[60%] left-[55%] w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_4px_rgba(96,165,250,0.8)]" />
-                <div className="absolute top-[75%] left-[15%] w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.8)]" />
-              </div>
-            </div>
-          </>
-        )}
       </main>
+      </div>
 
       {/* Slide-out Inspector Panel */}
-      {inspectorOpen && selectedNode && (
+      {inspectorOpen && selectedNode && !selectedEdge && (
         <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-slate-900/60">
           {/* Header */}
           <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-slate-900/40">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <span className={`px-2 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border ${typeStyles[selectedNode.data.type] || typeStyles.default}`}>
+                <span className="px-2 py-0.5 rounded bg-violet-glow/20 text-violet-glow font-label-sm text-[10px] font-semibold uppercase tracking-widest border border-violet-glow/30">
                   {selectedNode.data.type || 'Entity'}
                 </span>
                 <span className="px-2 py-0.5 rounded border border-outline-variant/50 text-on-surface-variant font-label-sm text-[10px] font-medium tracking-wide">
                   Active
                 </span>
               </div>
-              <input
-                value={selectedNode.data.label || ''}
-                onChange={(e) => updateSelectedNode({ data: { ...selectedNode.data, label: e.target.value } })}
-                className="bg-transparent border-none text-on-surface font-headline-lg text-[32px] font-semibold mb-1 tracking-tight p-0 focus:outline-none focus:ring-0 w-full"
-              />
+              <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1 truncate">
+                {selectedNode.data.label || 'Untitled'}
+              </h2>
               <p className="font-label-md text-[13px] text-outline font-medium">ID: {selectedNode.id}</p>
             </div>
             <button
@@ -491,7 +721,8 @@ export default function Editor() {
                 <input
                   type="text"
                   value={selectedNode.data.role || ''}
-                  onChange={(e) => updateSelectedNode({ data: { ...selectedNode.data, role: e.target.value } })}
+                  onChange={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
+                  onBlur={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
                   className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
@@ -500,7 +731,8 @@ export default function Editor() {
                 <input
                   type="text"
                   value={selectedNode.data.affiliation || ''}
-                  onChange={(e) => updateSelectedNode({ data: { ...selectedNode.data, affiliation: e.target.value } })}
+                  onChange={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
+                  onBlur={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
                   className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
@@ -510,25 +742,17 @@ export default function Editor() {
             <div className="border-t border-outline-variant/20 pt-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-headline-md text-[18px] font-semibold text-on-surface">Biography</h3>
-                <div className="flex gap-1 bg-black/30 p-1 rounded-md border border-outline-variant/20">
-                  <button className="p-1.5 text-outline hover:text-on-surface hover:bg-white/10 rounded transition-colors">
-                    <span className="material-symbols-outlined text-[16px]">format_bold</span>
-                  </button>
-                  <button className="p-1.5 text-outline hover:text-on-surface hover:bg-white/10 rounded transition-colors">
-                    <span className="material-symbols-outlined text-[16px]">format_italic</span>
-                  </button>
-                  <button className="p-1.5 text-outline hover:text-on-surface hover:bg-white/10 rounded transition-colors">
-                    <span className="material-symbols-outlined text-[16px]">link</span>
-                  </button>
-                </div>
               </div>
               <div
                 className="bg-black/20 rounded-lg border border-outline-variant/30 p-5 min-h-[220px] shadow-inner font-body-md text-[15px] leading-relaxed text-on-surface focus-within:border-indigo-500/50 transition-colors"
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={(e) => updateSelectedNode({ data: { ...selectedNode.data, description: e.target.innerText } })}
               >
-                {selectedNode.data.description || 'No description yet.'}
+                <textarea
+                  value={selectedNode.data.description || ''}
+                  onChange={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
+                  onBlur={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
+                  placeholder="No description yet."
+                  className="w-full h-full bg-transparent resize-none outline-none"
+                />
               </div>
             </div>
 
@@ -536,34 +760,161 @@ export default function Editor() {
             <div className="border-t border-outline-variant/20 pt-8 pb-4">
               <h3 className="font-headline-md text-[18px] font-semibold text-on-surface mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[20px] text-outline">account_tree</span>
-                Backlinks ({backlinks.length})
+                Connections ({edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id).length})
               </h3>
               <ul className="flex flex-col gap-2.5">
-                {backlinks.length === 0 ? (
-                  <li className="text-sm text-on-surface-variant">No backlinks yet.</li>
+                {edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id).length === 0 ? (
+                  <li className="text-sm text-on-surface-variant">No connections yet. Drag between node handles to connect entities.</li>
                 ) : (
-                  backlinks.map((link) => (
-                    <li
-                      key={link.id}
-                      onClick={() => handleBacklinkClick(link.id)}
-                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer border border-outline-variant/10 hover:border-outline-variant/30 transition-all shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                          <span className="material-symbols-outlined text-blue-400 text-[18px]">location_on</span>
-                        </div>
-                        <span className="font-body-md text-[14px] font-medium text-on-surface">{link.data?.label || 'Untitled'}</span>
-                      </div>
-                      <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-black/20 rounded-md">
-                        {link.data?.type || 'Entity'}
-                      </span>
-                    </li>
-                  ))
+                  edges
+                    .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
+                    .map((edge) => {
+                      const otherId = edge.source === selectedNode.id ? edge.target : edge.source;
+                      const otherNode = nodes.find((n) => n.id === otherId);
+                      const direction = edge.source === selectedNode.id ? 'Outgoing' : 'Incoming';
+                      return (
+                        <li key={edge.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer border border-outline-variant/10 hover:border-outline-variant/30 transition-all shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                              <span className="material-symbols-outlined text-blue-400 text-[18px]">location_on</span>
+                            </div>
+                            <span className="font-body-md text-[14px] font-medium text-on-surface">
+                              {otherNode?.data?.label || 'Untitled'}
+                            </span>
+                          </div>
+                          <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-black/20 rounded-md">
+                            {direction} · {otherNode?.data?.type || 'Entity'}
+                          </span>
+                        </li>
+                      );
+                    })
                 )}
               </ul>
             </div>
           </div>
         </aside>
+      )}
+
+      {/* Edge Inspector */}
+      {inspectorOpen && selectedEdge && (
+        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-slate-900/60">
+          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-slate-900/40">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-label-sm text-[10px] font-semibold uppercase tracking-widest border border-amber-500/30">
+                  Relationship
+                </span>
+              </div>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1 truncate">
+                {selectedEdge.label || 'Untitled Connection'}
+              </h2>
+            </div>
+            <button
+              onClick={() => setInspectorOpen(false)}
+              className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
+            <div className="group">
+              <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Relationship</label>
+              <input
+                type="text"
+                value={selectedEdge.label || ''}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setEdges((eds) => eds.map((edge) => edge.id === selectedEdge.id ? { ...edge, label: next } : edge));
+                }}
+                onBlur={(e) => {
+                  const next = e.target.value;
+                  setEdges((eds) => eds.map((edge) => edge.id === selectedEdge.id ? { ...edge, label: next } : edge));
+                }}
+                className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+              />
+            </div>
+
+            <div className="border-t border-outline-variant/20 pt-8">
+              <h3 className="font-headline-md text-[18px] font-semibold text-on-surface mb-4">Connection Details</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-outline-variant/10">
+                  <div className="w-8 h-8 rounded-full bg-violet-glow/10 flex items-center justify-center border border-violet-glow/20">
+                    <span className="material-symbols-outlined text-violet-glow text-[18px]">arrow_from_bracket</span>
+                  </div>
+                  <div>
+                    <p className="font-label-sm text-[11px] text-outline uppercase tracking-wider">Source</p>
+                    <p className="font-body-md text-[14px] text-on-surface">{nodes.find((n) => n.id === selectedEdge.source)?.data?.label || 'Unknown'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-outline-variant/10">
+                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                    <span className="material-symbols-outlined text-blue-400 text-[18px]">arrow_to_bracket</span>
+                  </div>
+                  <div>
+                    <p className="font-label-sm text-[11px] text-outline uppercase tracking-wider">Target</p>
+                    <p className="font-body-md text-[14px] text-on-surface">{nodes.find((n) => n.id === selectedEdge.target)?.data?.label || 'Unknown'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+          <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
+            <div className="p-6">
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                {pendingDelete.nodes.length > 0 && pendingDelete.edges.length > 0
+                  ? `Delete ${pendingDelete.nodes.length} node(s) and ${pendingDelete.edges.length} connection(s)? This cannot be undone.`
+                  : pendingDelete.nodes.length > 0
+                    ? `Delete ${pendingDelete.nodes.length} node(s)? This will also remove connected edges.`
+                    : `Delete ${pendingDelete.edges.length} connection(s)?`}
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-error text-on-error hover:bg-error/90 font-label-md text-label-md transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sessionExpired && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
+            <div className="p-6">
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Session Expired</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                Your session has expired or is unauthorized. Please sign in again to continue editing.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <Link
+                to="/login"
+                className="px-4 py-2 rounded-lg bg-indigo-electric text-white hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors"
+              >
+                Back to Login
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

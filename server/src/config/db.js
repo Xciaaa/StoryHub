@@ -14,10 +14,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: isLocal
     ? false
-    : { rejectUnauthorized: false }, // Always allow cloud SSL certificates locally
+    : { rejectUnauthorized: false },
   max: parseInt(process.env.PG_POOL_MAX || '10', 10),
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
 });
 
 pool.on('error', (err) => {
@@ -32,11 +34,24 @@ pool.on('error', (err) => {
  */
 async function query(text, params) {
   const start = Date.now();
-  const result = await pool.query(text, params);
-  if (process.env.LOG_SQL === 'true') {
-    console.log('executed query', { text, duration: Date.now() - start, rows: result.rowCount });
+  const maxRetries = 2;
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await pool.query(text, params);
+      if (process.env.LOG_SQL === 'true') {
+        console.log('executed query', { text, duration: Date.now() - start, rows: result.rowCount });
+      }
+      return result;
+    } catch (err) {
+      lastErr = err;
+      const msg = (err && err.message) ? err.message : String(err);
+      const retryable = /terminat|timeout|socket hang up|ECONNRESET|ETIMEDOUT|connection.*close/i.test(msg);
+      if (!retryable || attempt === maxRetries) break;
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+    }
   }
-  return result;
+  throw lastErr;
 }
 
 /**

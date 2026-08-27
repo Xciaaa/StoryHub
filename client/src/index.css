@@ -120,6 +120,12 @@
     background-size: 32px 32px;
   }
 
+  .canvas-bg {
+    background-color: #0c1324;
+    background-image: radial-gradient(rgba(144, 143, 160, 0.25) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
   .font-display {
     font-family: var(--font-family-display);
   }
@@ -238,12 +244,12 @@
     letter-spacing: 0.02em;
   }
 
-  .node-card {
-    background-color: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(144, 143, 160, 0.2);
-    transition: all 0.2s ease;
-  }
+.node-card {
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(144, 143, 160, 0.2);
+  transition: all 0.2s ease;
+}
 
   .node-card:hover {
     border-color: rgba(144, 143, 160, 0.5);
@@ -280,6 +286,31 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: rgba(144, 143, 160, 0.5);
   }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.react-flow__controls {
+  background: rgba(12, 19, 36, 0.85) !important;
+  border: 1px solid rgba(144, 143, 160, 0.25) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.react-flow__controls-button {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-bottom: 1px solid rgba(144, 143, 160, 0.15) !important;
+  fill: rgba(220, 225, 251, 0.8) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(79, 70, 229, 0.2) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: rgba(220, 225, 251, 0.9) !important;
 }
 
 @layer utilities {
