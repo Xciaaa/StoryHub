@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, API_BASE } from '../lib/api';
+import Avatar from '../components/Avatar';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -172,14 +173,7 @@ export default function Notifications() {
               <span className="material-symbols-outlined">settings</span>
             </Link>
             <Link to={`/profile/${user?.username}`} className="w-10 h-10 rounded-full border border-outline-variant/30 overflow-hidden bg-surface-container">
-              <img
-                alt="User profile"
-                className="w-full h-full object-cover"
-                src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuCw0-hyWso903WA_2aiz01PaZ3VAkAkQaYrMQY1EotznIjdaJqUXCAqEiNsrgS4PcCdDve0-uBXyG08b6DtLGwfURgWbmmcBHSkI5ud30un37-UQKGdCPXnUz88iHUodB7i1XMrLZRT4NilnNLSwhqKEc41t3rNWM8ydQeA_NzWfCLTz2zRqebZEH-e5TAUmC20NUvk7XqNbH_1i39DRm4PsWisaPUyoYtwCCnczJ3NxiKsxb4NXBilRw"}
-                onError={(e) => {
-                  e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuCw0-hyWso903WA_2aiz01PaZ3VAkAkQaYrMQY1EotznIjdaJqUXCAqEiNsrgS4PcCdDve0-uBXyG08b6DtLGwfURgWbmmcBHSkI5ud30un37-UQKGdCPXnUz88iHUodB7i1XMrLZRT4NilnNLSwhqKEc41t3rNWM8ydQeA_NzWfCLTz2zRqebZEH-e5TAUmC20NUvk7XqNbH_1i39DRm4PsWisaPUyoYtwCCnczJ3NxiKsxb4NXBilRw";
-                }}
-              />
+              <Avatar src={user?.avatar} alt="User profile" className="w-full h-full object-cover" />
             </Link>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import Avatar from '../components/Avatar';
 
 export default function Profile() {
   const { username } = useParams();
@@ -176,14 +177,7 @@ export default function Profile() {
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${currentUser?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
-            <img
-              alt="User profile"
-              className="w-full h-full object-cover"
-              src={currentUser?.avatar ? (currentUser.avatar.startsWith('http') ? currentUser.avatar : `${API_BASE}${currentUser.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg"}
-              onError={(e) => {
-                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg";
-              }}
-            />
+            <Avatar src={currentUser?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>
@@ -205,14 +199,7 @@ export default function Profile() {
           <div className="relative z-10 pt-32 md:pt-40 px-6 md:px-10 pb-8 flex flex-col md:flex-row gap-6 items-end">
             {/* Avatar */}
             <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-2 border-primary-container shadow-[0_0_30px_rgba(79,70,229,0.4)] shrink-0">
-              <img
-                alt={profile.username}
-                className="w-full h-full object-cover"
-                src={profile.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `${API_BASE}${profile.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuBlu7fF-XI8E-Piutm-lpWzEc8RX45NAxDi9URK6KncBqZdoSIskqqW9gFxQ5m0ju-36NP3Nav9vunOBY_zMJF91ivlJ2OWlZb1BUyYhA3uHmbYs0kjQd-KbqqlEV2qSBv9GJRsIcFsW7_X5x-0xiRxSQ53E_JSVVnndDnYNrbm5j4JUSPnAE5u3W5deL5zRD9n5cT4VThJ4ti7kBJ9uaI_Yr0KumnWtEYSVYTu7pUYdzXug2sZ2Ivnkw"}
-                onError={(e) => {
-                  e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBlu7fF-XI8E-Piutm-lpWzEc8RX45NAxDi9URK6KncBqZdoSIskqqW9gFxQ5m0ju-36NP3Nav9vunOBY_zMJF91ivlJ2OWlZb1BUyYhA3uHmbYs0kjQd-KbqqlEV2qSBv9GJRsIcFsW7_X5x-0xiRxSQ53E_JSVVnndDnYNrbm5j4JUSPnAE5u3W5deL5zRD9n5cT4VThJ4ti7kBJ9uaI_Yr0KumnWtEYSVYTu7pUYdzXug2sZ2Ivnkw";
-                }}
-              />
+              <Avatar src={profile.avatar} alt={profile.username} className="w-full h-full object-cover" />
             </div>
             {/* User Info */}
             <div className="flex-1 w-full">

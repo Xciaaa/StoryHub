@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import Avatar from '../components/Avatar';
 
 const SECTIONS = [
   { id: 'account', label: 'Account', icon: 'person' },

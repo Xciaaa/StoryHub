@@ -13,6 +13,7 @@ import 'reactflow/dist/style.css';
 import CustomNode from '../components/CustomNode';
 import Timeline from '../components/Timeline';
 import Atlas from '../components/Atlas';
+import Avatar from '../components/Avatar';
 import Codex from '../components/Codex';
 import Graveyard from '../components/Graveyard';
 import Help from '../components/Help';
@@ -562,14 +563,7 @@ export default function Editor() {
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 ml-2">
-            <img
-              alt="User profile"
-              className="w-full h-full object-cover"
-              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg"}
-              onError={(e) => {
-                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg";
-              }}
-            />
+            <Avatar src={user?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>

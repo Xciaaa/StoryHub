@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 const GENRES = ['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
 
@@ -158,14 +159,7 @@ export default function Community() {
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant/30">
-            <img
-              alt="User"
-              className="w-full h-full object-cover"
-              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuCCfcNH1fBdde7X9avFk5fvDyXlPe8nPvQPnWSWGd9qmGAcBVvFIWIyDQnEOqrYJS1QZFtXC8WadgprFr0UlLltggH-zkRQLFTkevN6X2e9p9YWg7CbPa2LsCm8qFdVLuEndoBIEX-alklxB6aVvUwjdCL1nfXhL63RubZFnnNlXAoJ93ersdQRiCN3b0-UNoMbzpmxcNqTWRYz1CMJnTAzZk0uiQ-qed306ZmCoLi0Vmno0eNUPN8emA"}
-              onError={(e) => {
-                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuCCfcNH1fBdde7X9avFk5fvDyXlPe8nPvQPnWSWGd9qmGAcBVvFIWIyDQnEOqrYJS1QZFtXC8WadgprFr0UlLltggH-zkRQLFTkevN6X2e9p9YWg7CbPa2LsCm8qFdVLuEndoBIEX-alklxB6aVvUwjdCL1nfXhL63RubZFnnNlXAoJ93ersdQRiCN3b0-UNoMbzpmxcNqTWRYz1CMJnTAzZk0uiQ-qed306ZmCoLi0Vmno0eNUPN8emA";
-              }}
-            />
+            <Avatar src={user?.avatar} alt="User" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>
@@ -174,14 +168,7 @@ export default function Community() {
       <aside className="hidden md:flex flex-col p-gutter gap-4 bg-surface-container-lowest/80 backdrop-blur-2xl border-r border-outline-variant/10 shadow-xl fixed left-0 top-16 h-[calc(100vh-64px)] w-panel-width z-40">
         <div className="flex items-center gap-3 p-2 mb-4 border-b border-outline-variant/20 pb-4">
           <div className="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
-            <img
-              alt="Architect"
-              className="w-full h-full object-cover"
-              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuCxE3PcbNA5VAgsefLTrj0tRu8dsav1ydZMojPQvI5J7BzT-900A9fIQPoHRwilIkkqVTiY5jSKErY9VD193GVxSv8lY3gKNIv5AoPAESke21cHPqpYVmnuhanzoh3HP79QUXOXtwTskayQrtjx5m3pLmVZUG0Tm-kXwDB4_18Gwqi6-rHpAZBNi0Jm8hO8jJF11FDdlqR_0RyvqKs4BPZQvCFBaUknPobE0g6SPy1Uz2sUe6zTh8c8nA"}
-              onError={(e) => {
-                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuCxE3PcbNA5VAgsefLTrj0tRu8dsav1ydZMojPQvI5J7BzT-900A9fIQPoHRwilIkkqVTiY5jSKErY9VD193GVxSv8lY3gKNIv5AoPAESke21cHPqpYVmnuhanzoh3HP79QUXOXtwTskayQrtjx5m3pLmVZUG0Tm-kXwDB4_18Gwqi6-rHpAZBNi0Jm8hO8jJF11FDdlqR_0RyvqKs4BPZQvCFBaUknPobE0g6SPy1Uz2sUe6zTh8c8nA";
-              }}
-            />
+            <Avatar src={user?.avatar} alt="Architect" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col">
             <span className="font-headline-md text-[18px] text-primary leading-tight">Chronos Architect</span>
@@ -329,8 +316,12 @@ export default function Community() {
                             <div className="w-full h-full bg-surface-container" />
                           )}
                           <div className="absolute top-3 right-3 z-20 bg-surface-container/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 border border-outline-variant/50">
-                            <span className="material-symbols-outlined text-xs text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                            <span className="font-label-sm text-on-surface">Trending</span>
+                            {(p.trending_score > 10 || (p.like_count > 5 || p.fork_count > 3)) && (
+                              <>
+                                <span className="material-symbols-outlined text-xs text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                <span className="font-label-sm text-on-surface">Trending</span>
+                              </>
+                            )}
                           </div>
                         </div>
                         <div className="p-5 flex flex-col flex-grow relative z-20 -mt-6">
@@ -358,7 +349,7 @@ export default function Community() {
                                 className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50"
                               >
                                 <span className="material-symbols-outlined text-sm">fork_right</span>
-                                <span className="font-label-sm">{forkingId === p.id ? 'Forking…' : 'Fork'}</span>
+                                <span className="font-label-sm">{p.fork_count || 0}</span>
                               </button>
                               <button
                                 onClick={(e) => {
@@ -374,7 +365,7 @@ export default function Community() {
                                 >
                                   favorite
                                 </span>
-                                <span className="font-label-sm">{likeCounts[p.id] || 0}</span>
+                                <span className="font-label-sm">{likeCounts[p.id] ?? p.like_count ?? 0}</span>
                               </button>
                             </div>
                           </div>
@@ -427,7 +418,7 @@ export default function Community() {
                         <Link to={`/profile/${architect.username}`} className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="relative shrink-0">
                             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-outline-variant/50">
-                              <img alt={architect.username} className="w-full h-full object-cover" src={architect.avatar ? (architect.avatar.startsWith('http') ? architect.avatar : `${API_BASE}${architect.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew"} onError={(e) => { e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew"; }} />
+                              <Avatar src={architect.avatar} alt={architect.username} className="w-full h-full object-cover" />
                             </div>
                           </div>
                           <div className="flex flex-col min-w-0">

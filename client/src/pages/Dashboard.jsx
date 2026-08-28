@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 function getNodeCount(canvasData) {
   if (!canvasData) return 0;
@@ -171,14 +172,7 @@ export default function Dashboard() {
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30 ml-2">
-            <img
-              alt="User profile"
-              className="w-full h-full object-cover"
-              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q"}
-              onError={(e) => {
-                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q";
-              }}
-            />
+            <Avatar src={user?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>

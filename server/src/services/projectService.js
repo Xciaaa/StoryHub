@@ -203,10 +203,15 @@ async function getPublicProject(id) {
   }
 
   const result = await query(
-    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username
+    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username,
+            COUNT(DISTINCT l.user_id) AS like_count,
+            COUNT(DISTINCT f2.id) AS fork_count
      FROM projects p
      LEFT JOIN users u ON p.user_id = u.id
-     WHERE p.id = $1 AND p.is_public = true`,
+     LEFT JOIN likes l ON l.project_id = p.id
+     LEFT JOIN projects f2 ON f2.parent_project_id = p.id
+     WHERE p.id = $1 AND p.is_public = true
+     GROUP BY p.id, u.username`,
     [id]
   );
 
@@ -215,9 +220,16 @@ async function getPublicProject(id) {
     return { data: null, fromCache: false };
   }
 
-  await setCached(cacheKey, project);
+  const enriched = {
+    ...project,
+    like_count: parseInt(project.like_count || '0', 10),
+    fork_count: parseInt(project.fork_count || '0', 10),
+    trending_score: (parseInt(project.like_count || '0', 10) * 2) + (parseInt(project.fork_count || '0', 10) * 3),
+  };
 
-  return { data: project, fromCache: false };
+  await setCached(cacheKey, enriched);
+
+  return { data: enriched, fromCache: false };
 }
 
 const PUBLIC_LIST_CACHE_TTL_SECONDS = 30;
@@ -233,16 +245,30 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   }
 
   const result = await query(
-    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username
+    `SELECT 
+       p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username,
+       COUNT(DISTINCT l.user_id) AS like_count,
+       COUNT(DISTINCT f2.id) AS fork_count
      FROM projects p
      LEFT JOIN users u ON p.user_id = u.id
+     LEFT JOIN likes l ON l.project_id = p.id
+     LEFT JOIN projects f2 ON f2.parent_project_id = p.id
      WHERE p.is_public = true
-     ORDER BY p.updated_at DESC
+     GROUP BY p.id, u.username
+     ORDER BY 
+       (COUNT(DISTINCT l.user_id) * 2 + COUNT(DISTINCT f2.id) * 3 + EXTRACT(EPOCH FROM (NOW() - p.updated_at)) * -0.0001) DESC,
+       p.updated_at DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset]
   );
 
-  const projects = result.rows;
+  const projects = result.rows.map((row) => ({
+    ...row,
+    like_count: parseInt(row.like_count || '0', 10),
+    fork_count: parseInt(row.fork_count || '0', 10),
+    trending_score: (parseInt(row.like_count || '0', 10) * 2) + (parseInt(row.fork_count || '0', 10) * 3),
+  }));
+
   await setCached(cacheKey, projects);
 
   return { data: projects, fromCache: false };
