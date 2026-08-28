@@ -1,0 +1,27 @@
+# Ignore dependencies in all folders
+client/node_modules/
+server/node_modules/
+
+# Ignore frontend build outputs
+client/dist/
+client/build/
+
+# Ignore all secrets in both client and server
+**/.env
+**/.env.local
+**/.env.development.local
+
+# Layerbase System Cache & Local Data
+**/.layerbase-cli/
+**/.spindb/
+server/pgdata/
+
+# Redis Persistence Logs
+**/dump.rdb
+**/appendonly.aof
+
+# OS / Editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
