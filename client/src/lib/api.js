@@ -97,6 +97,7 @@ export const api = {
   getUnreadNotificationsCount: () => request('/api/notifications/unread-count', { auth: true }),
   markNotificationRead: (id) => request(`/api/notifications/${id}/read`, { method: 'PATCH', auth: true }),
   markAllNotificationsRead: () => request('/api/notifications/read-all', { method: 'PATCH', auth: true }),
+  deleteNotification: (id) => request(`/api/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
   changePassword: (currentPassword, newPassword) =>
     request('/api/auth/change-password', { method: 'POST', body: { currentPassword, newPassword }, auth: true }),
 

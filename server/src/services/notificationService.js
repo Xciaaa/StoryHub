@@ -114,6 +114,14 @@ async function markAsRead(userId, notificationId) {
   return result.rows[0];
 }
 
+async function deleteNotification(userId, notificationId) {
+  const result = await query(
+    'DELETE FROM notifications WHERE id = $1 AND user_id = $2 RETURNING id',
+    [notificationId, userId]
+  );
+  return result.rows[0] || null;
+}
+
 async function markAllAsRead(userId) {
   const result = await query(
     'UPDATE notifications SET is_read = TRUE, updated_at = NOW() WHERE user_id = $1 AND is_read = FALSE RETURNING *',
@@ -144,4 +152,5 @@ module.exports = {
   createNotification,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
 };

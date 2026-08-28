@@ -203,7 +203,7 @@ async function getPublicProject(id) {
   }
 
   const result = await query(
-    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username,
+    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username, u.avatar,
             COUNT(DISTINCT l.user_id) AS like_count,
             COUNT(DISTINCT f2.id) AS fork_count
      FROM projects p
@@ -211,7 +211,7 @@ async function getPublicProject(id) {
      LEFT JOIN likes l ON l.project_id = p.id
      LEFT JOIN projects f2 ON f2.parent_project_id = p.id
      WHERE p.id = $1 AND p.is_public = true
-     GROUP BY p.id, u.username`,
+     GROUP BY p.id, u.username, u.avatar`,
     [id]
   );
 
@@ -246,7 +246,7 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
 
   const result = await query(
     `SELECT 
-       p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username,
+       p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username, u.avatar,
        COUNT(DISTINCT l.user_id) AS like_count,
        COUNT(DISTINCT f2.id) AS fork_count
      FROM projects p
@@ -254,7 +254,7 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
      LEFT JOIN likes l ON l.project_id = p.id
      LEFT JOIN projects f2 ON f2.parent_project_id = p.id
      WHERE p.is_public = true
-     GROUP BY p.id, u.username
+     GROUP BY p.id, u.username, u.avatar
      ORDER BY 
        (COUNT(DISTINCT l.user_id) * 2 + COUNT(DISTINCT f2.id) * 3 + EXTRACT(EPOCH FROM (NOW() - p.updated_at)) * -0.0001) DESC,
        p.updated_at DESC

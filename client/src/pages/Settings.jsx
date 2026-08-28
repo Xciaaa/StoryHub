@@ -127,6 +127,13 @@ export default function Settings() {
     }
   };
 
+  const handleAvatarUrl = (e) => {
+    const url = e.target.value.trim();
+    if (url) {
+      setForm((prev) => ({ ...prev, avatar: url }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center">
@@ -211,6 +218,16 @@ export default function Settings() {
                         <span className="material-symbols-outlined text-on-surface">photo_camera</span>
                       </div>
                       <input type="file" accept="image/*" onChange={handleAvatarChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    </div>
+                    <div className="w-full max-w-[280px]">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant mb-1 block">Or paste avatar URL</label>
+                      <input
+                        type="url"
+                        value={form.avatar}
+                        onChange={(e) => setForm((prev) => ({ ...prev, avatar: e.target.value }))}
+                        placeholder="https://example.com/avatar.jpg"
+                        className="w-full px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                      />
                     </div>
                     <button type="button" onClick={() => document.querySelector('input[type=file]')?.click()} className="font-label-md text-label-md text-primary hover:text-inverse-primary transition-colors">
                       Change Avatar

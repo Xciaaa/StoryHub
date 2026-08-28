@@ -139,6 +139,7 @@ export default function Editor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [newNodeType, setNewNodeType] = useState('Character');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const isFirstLoad = useRef(true);
   const savingRef = useRef(false);
@@ -569,64 +570,76 @@ export default function Editor() {
         </div>
       </nav>
 
-      <div className="grid grid-cols-[320px_1fr] h-full">
+      <div className={`grid h-full transition-all duration-300 ${sidebarCollapsed ? 'grid-cols-[64px_1fr]' : 'grid-cols-[320px_1fr]'}`}>
         {/* Side Navigation */}
-        <aside className="flex flex-col p-4 glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full">
-        <div className="flex items-center gap-4 mb-8 p-2">
-          <label className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm cursor-pointer relative group">
-            {project?.cover_image ? (
-              <img
-                alt="Project cover"
-                className="w-full h-full object-cover"
-                src={`${API_BASE}${project.cover_image}`}
-              />
-            ) : (
-              <div className="w-full h-full bg-surface-container-high flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-outline">image</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-surface-container/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="material-symbols-outlined text-[16px] text-on-primary">edit</span>
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleCoverImageChange}
-              className="hidden"
-            />
-          </label>
-          <div>
-            <h2 className="font-headline-md text-[20px] font-semibold text-on-surface truncate">{title || 'Untitled'}</h2>
-            <p className="font-body-md text-[14px] text-on-surface-variant">{project?.genre || 'Untitled Project'}</p>
-            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
-              <div className="relative">
+        <aside className={`flex flex-col glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full transition-all duration-300 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+        <div className="flex items-center justify-between mb-4">
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-4 p-2">
+              <label className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm cursor-pointer relative group">
+                {project?.cover_image ? (
+                  <img
+                    alt="Project cover"
+                    className="w-full h-full object-cover"
+                    src={`${API_BASE}${project.cover_image}`}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-surface-container-high flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[24px] text-outline">image</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-surface-container/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[16px] text-on-primary">edit</span>
+                </div>
                 <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={isPublic}
-                  onChange={async (e) => {
-                    const next = e.target.checked;
-                    setIsPublic(next);
-                    try {
-                      const updated = await api.updateProject(id, {
-                        canvasData: serializeCanvas({ nodes, edges }),
-                        coverImage: project?.cover_image || null,
-                        isPublic: next,
-                      });
-                      setProject(updated);
-                    } catch (err) {
-                      console.error('Failed to update visibility', err);
-                      setIsPublic(!next);
-                    }
-                  }}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageChange}
+                  className="hidden"
                 />
-                <div className="w-9 h-5 bg-surface-variant rounded-full peer-checked:bg-indigo-electric transition-colors" />
-                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
+              </label>
+              <div>
+                <h2 className="font-headline-md text-[20px] font-semibold text-on-surface truncate">{title || 'Untitled'}</h2>
+                <p className="font-body-md text-[14px] text-on-surface-variant">{project?.genre || 'Untitled Project'}</p>
+                <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={isPublic}
+                      onChange={async (e) => {
+                        const next = e.target.checked;
+                        setIsPublic(next);
+                        try {
+                          const updated = await api.updateProject(id, {
+                            canvasData: serializeCanvas({ nodes, edges }),
+                            coverImage: project?.cover_image || null,
+                            isPublic: next,
+                          });
+                          setProject(updated);
+                        } catch (err) {
+                          console.error('Failed to update visibility', err);
+                          setIsPublic(!next);
+                        }
+                      }}
+                    />
+                    <div className="w-9 h-5 bg-surface-variant rounded-full peer-checked:bg-indigo-electric transition-colors" />
+                    <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
+                  </div>
+                  <span className="font-label-sm text-[12px] text-on-surface-variant">{isPublic ? 'Public' : 'Private'}</span>
+                </label>
               </div>
-              <span className="font-label-sm text-[12px] text-on-surface-variant">{isPublic ? 'Public' : 'Private'}</span>
-            </label>
-          </div>
+            </div>
+          )}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 transition-all shrink-0"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span className="material-symbols-outlined text-[20px]">{sidebarCollapsed ? 'chevron_right' : 'chevron_left'}</span>
+          </button>
         </div>
+        {!sidebarCollapsed && (
           <div className="mb-6 flex flex-col gap-2">
             <select
               value={newNodeType}
@@ -654,6 +667,7 @@ export default function Editor() {
               New Entity
             </button>
           </div>
+        )}
         <nav className="flex-1 flex flex-col gap-1.5">
           <button
             onClick={() => setActiveTab('nodes')}
@@ -664,7 +678,7 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined">account_tree</span>
-            Nodes
+            {!sidebarCollapsed && 'Nodes'}
           </button>
           <button
             onClick={() => setActiveTab('timeline')}
@@ -675,7 +689,7 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined">event_note</span>
-            Timeline
+            {!sidebarCollapsed && 'Timeline'}
           </button>
           <button
             onClick={() => setActiveTab('atlas')}
@@ -686,7 +700,7 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined">map</span>
-            Atlas
+            {!sidebarCollapsed && 'Atlas'}
           </button>
           <button
             onClick={() => setActiveTab('codex')}
@@ -697,7 +711,7 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined">menu_book</span>
-            Codex
+            {!sidebarCollapsed && 'Codex'}
           </button>
           <button
             onClick={() => setActiveTab('graveyard')}
@@ -708,7 +722,7 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined">delete</span>
-            Graveyard
+            {!sidebarCollapsed && 'Graveyard'}
           </button>
         </nav>
         <div className="mt-auto border-t border-outline-variant/30 pt-4 flex flex-col gap-1.5">
@@ -721,15 +735,15 @@ export default function Editor() {
             }`}
           >
             <span className="material-symbols-outlined text-[20px]">help</span>
-            Help
+            {!sidebarCollapsed && 'Help'}
           </button>
           <Link to="/settings" className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
             <span className="material-symbols-outlined text-[20px]">settings</span>
-            Settings
+            {!sidebarCollapsed && 'Settings'}
           </Link>
           <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
             <span className="material-symbols-outlined text-[20px]">rate_review</span>
-            Feedback
+            {!sidebarCollapsed && 'Feedback'}
           </button>
         </div>
       </aside>

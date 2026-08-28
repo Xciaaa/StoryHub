@@ -123,6 +123,23 @@ export default function Notifications() {
     }
   };
 
+  const handleDeleteNotification = async (notificationId, e) => {
+    e.stopPropagation();
+    try {
+      await api.deleteNotification(notificationId);
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      setUnreadCount((prev) => {
+        const notification = notifications.find((n) => n.id === notificationId);
+        if (notification && !notification.is_read) {
+          return Math.max(0, prev - 1);
+        }
+        return prev;
+      });
+    } catch {
+      // ignore delete errors
+    }
+  };
+
   const displayNotifications = notifications.map((n) => ({
     id: n.id,
     type: n.type,
@@ -261,11 +278,20 @@ export default function Notifications() {
                   {notification.action && notification.actionUrl && (
                     <Link
                       to={notification.actionUrl}
+                      onClick={(e) => e.stopPropagation()}
                       className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-sm text-label-sm transition-colors shrink-0"
                     >
                       {notification.action}
                     </Link>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteNotification(notification.id, e)}
+                    className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors shrink-0"
+                    title="Delete notification"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
                 </div>
               </div>
             ))}

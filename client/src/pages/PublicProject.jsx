@@ -12,6 +12,10 @@ import Avatar from '../components/Avatar';
 import Logo from '../components/Logo';
 import NotificationBell from '../components/NotificationBell';
 import { useToast } from '../context/ToastContext';
+import CustomNode from '../components/CustomNode';
+
+const GENRES = ['Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
+const nodeTypes = { custom: CustomNode };
 
 export default function PublicProject() {
   const { id } = useParams();
@@ -216,29 +220,21 @@ export default function PublicProject() {
         {/* Canvas Area */}
         <main className="flex-1 relative">
           <ReactFlow
-            nodes={canvas.nodes.map((n) => ({
-              ...n,
-              style: {
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
-                borderRadius: '12px',
-                fontFamily: 'var(--font-family-body)',
-                color: 'var(--color-on-background)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              },
-            }))}
-            edges={canvas.edges.map((e) => ({
-              ...e,
-              style: { stroke: '#6366f1', strokeWidth: 2 },
-              type: 'smoothstep',
-            }))}
+            nodes={canvas.nodes.map((n) => ({ ...n, data: { ...n.data, readOnly: true } }))}
+            edges={canvas.edges}
+            nodeTypes={nodeTypes}
             nodesDraggable={false}
             nodesConnectable={false}
             elementsSelectable={false}
-            fitView
+            fitView={{ padding: 0.2 }}
             defaultEdgeOptions={{
               style: { stroke: '#6366f1', strokeWidth: 2 },
-              type: 'smoothstep',
+              type: 'default',
+              labelStyle: { fill: '#908fa0', fontSize: 11 },
+              labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
+              labelBgPadding: [4, 2],
+              labelBgBorderRadius: 4,
+              selectable: true,
             }}
           >
             <Background variant="dots" gap={32} size={1} color="rgba(144, 143, 160, 0.2)" />

@@ -16,6 +16,7 @@ const typeStyles = {
 
 function CustomNode({ data, selected }) {
   const safeData = data || {};
+  const readOnly = safeData.readOnly;
   const typeClass = typeStyles[safeData.type] || typeStyles.default;
 
   const [editing, setEditing] = useState(null);
@@ -42,7 +43,7 @@ function CustomNode({ data, selected }) {
       }`}
     >
       <div className="flex items-center justify-between mb-3">
-        {editing === 'type' ? (
+        {editing === 'type' && !readOnly ? (
           <select
             autoFocus
             className="px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none"
@@ -62,14 +63,14 @@ function CustomNode({ data, selected }) {
         ) : (
           <button
             type="button"
-            onClick={() => startEdit('type', safeData.type)}
-            className={`px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border ${typeClass}`}
+            onClick={() => !readOnly && startEdit('type', safeData.type)}
+            className={`px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border ${typeClass} ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
           >
             {safeData.type || 'Entity'}
           </button>
         )}
 
-        {editing === 'label' ? (
+        {editing === 'label' && !readOnly ? (
           <input
             autoFocus
             className="bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none w-[140px]"
@@ -84,22 +85,24 @@ function CustomNode({ data, selected }) {
             }}
           />
         ) : (
-          <button
-            type="button"
-            onClick={() => safeData.onDelete?.()}
-            className="material-symbols-outlined text-outline text-[18px] hover:text-on-surface transition-colors"
-          >
-            delete
-          </button>
+          !readOnly && (
+            <button
+              type="button"
+              onClick={() => safeData.onDelete?.()}
+              className="material-symbols-outlined text-outline text-[18px] hover:text-on-surface transition-colors"
+            >
+              delete
+            </button>
+          )
         )}
       </div>
 
-      {editing === 'label' ? null : (
+      {editing === 'label' && !readOnly ? null : (
         <h3
           role="button"
-          onDoubleClick={() => startEdit('label', safeData.label)}
+          onDoubleClick={() => !readOnly && startEdit('label', safeData.label)}
           className="font-headline-md text-[22px] font-semibold text-on-surface mb-2 truncate"
-          title="Double-click to rename"
+          title={readOnly ? '' : "Double-click to rename"}
         >
           {safeData.label || 'Untitled'}
         </h3>

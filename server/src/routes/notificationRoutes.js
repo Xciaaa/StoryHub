@@ -9,5 +9,6 @@ router.get('/', notificationController.listNotifications);
 router.get('/unread-count', notificationController.getUnreadCount);
 router.patch('/:id/read', notificationController.markNotificationRead);
 router.patch('/read-all', notificationController.markAllNotificationsRead);
+router.delete('/:id', notificationController.deleteNotification);
 
 module.exports = router;
