@@ -98,6 +98,10 @@ export const api = {
   toggleLike: (projectId) => request(`/api/projects/${projectId}/like`, { method: 'POST', auth: true }),
   getLikeCount: (projectId) => request(`/api/projects/${projectId}/likes/count`, { auth: true }),
   getLikeStatus: (projectId) => request(`/api/projects/${projectId}/like`, { auth: true }),
+
+  listGoals: () => request('/api/goals/goals', { auth: true }),
+  completeGoal: (key) => request(`/api/goals/goals/${encodeURIComponent(key)}/complete`, { method: 'POST', auth: true }),
+  checkGoals: () => request('/api/goals/goals/check', { method: 'POST', auth: true }),
 };
 
 export { API_BASE, getToken };

@@ -342,11 +342,7 @@ export default function Editor() {
     return () => {
       if (!id || !hasUnsavedChanges) return;
       try {
-        const payload = serializeCanvas({ nodes, edges });
-        const body = JSON.stringify({ canvasData: payload });
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(`${API_BASE}/api/projects/${id}`, body);
-        }
+        saveDraft(id, { nodes, edges });
       } catch {
         // ignore cleanup errors
       }

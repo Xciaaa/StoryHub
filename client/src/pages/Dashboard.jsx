@@ -89,6 +89,7 @@ export default function Dashboard() {
       });
       closeModal();
       navigate(`/editor/${project.id}`);
+      api.completeGoal('create_first_project').catch(() => {});
     } catch (err) {
       setError(err.message);
     } finally {

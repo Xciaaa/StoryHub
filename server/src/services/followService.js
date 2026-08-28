@@ -75,6 +75,11 @@ async function isFollowing(followerId, followingId) {
   return result.rowCount > 0;
 }
 
+async function countFollows(userId) {
+  const result = await query('SELECT COUNT(*) AS count FROM follows WHERE follower_id = $1', [userId]);
+  return parseInt(result.rows[0].count, 10);
+}
+
 module.exports = {
   searchUsers,
   followUser,
@@ -82,4 +87,5 @@ module.exports = {
   getFollowers,
   getFollowing,
   isFollowing,
+  countFollows,
 };

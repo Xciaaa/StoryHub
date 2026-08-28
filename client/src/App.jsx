@@ -12,6 +12,7 @@ import PublicProject from './pages/PublicProject';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import OnboardingGuide from './components/OnboardingGuide';
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          <OnboardingGuide />
         </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>

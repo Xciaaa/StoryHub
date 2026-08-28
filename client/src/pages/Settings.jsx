@@ -468,6 +468,25 @@ export default function Settings() {
 
           <div className="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden">
             <div className="flex flex-col gap-2">
+              <h2 className="font-headline-lg text-headline-lg text-on-surface">Onboarding</h2>
+              <p className="font-body-md text-body-md text-on-surface-variant">Reset the getting started guide if you dismissed it.</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('onboarding_dismissed_v1');
+                  alert('Onboarding guide reset. It will appear again shortly.');
+                }}
+                className="w-full px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 font-label-md text-label-md transition-colors"
+              >
+                Reset Getting Started Guide
+              </button>
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden">
+            <div className="flex flex-col gap-2">
               <h2 className="font-headline-lg text-headline-lg text-error">Danger Zone</h2>
               <p className="font-body-md text-body-md text-on-surface-variant">Irreversible account actions.</p>
             </div>

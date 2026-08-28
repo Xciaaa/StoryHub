@@ -6,6 +6,51 @@ import Avatar from '../components/Avatar';
 
 const GENRES = ['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
 
+const PROMPTS = [
+  {
+    id: 1,
+    title: 'The Silent Heist',
+    description: 'Design a magic system where spells are cast by absolute silence rather than spoken words.',
+    difficulty: 'Hard',
+    icon: 'edit_note',
+  },
+  {
+    id: 2,
+    title: 'Dyson Dilemma',
+    description: 'A civilization must decide whether to dismantle their home star to build a ringworld.',
+    difficulty: 'Epic',
+    icon: 'public',
+  },
+  {
+    id: 3,
+    title: 'Memory Market',
+    description: 'Create a black-market economy where memories are traded as currency.',
+    difficulty: 'Medium',
+    icon: 'account_balance',
+  },
+  {
+    id: 4,
+    title: 'The Last Cartographer',
+    description: 'Map a world where geography changes overnight and only one person remembers the old layout.',
+    difficulty: 'Medium',
+    icon: 'map',
+  },
+  {
+    id: 5,
+    title: 'Verdict of the Sea',
+    description: 'Write a trial where the defendant is an ocean and the jury is made of shells.',
+    difficulty: 'Experimental',
+    icon: 'gavel',
+  },
+  {
+    id: 6,
+    title: 'Echoes of Empire',
+    description: 'Build a fallen empire whose ruins still broadcast propaganda from a thousand years ago.',
+    difficulty: 'Hard',
+    icon: 'castle',
+  },
+];
+
 export default function Community() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -90,6 +135,7 @@ export default function Community() {
       } else {
         await api.followUser(architectId);
         setFollowingIds((prev) => ({ ...prev, [architectId]: true }));
+        api.completeGoal('follow_architect').catch(() => {});
       }
     } catch (err) {
       console.error('Follow failed:', err);
@@ -127,6 +173,22 @@ export default function Community() {
       setLikeCounts((prev) => ({ ...prev, [projectId]: result.count }));
     } catch (err) {
       console.error('Like failed:', err);
+    }
+  };
+
+  const handleAcceptChallenge = async (prompt) => {
+    if (!user) return;
+    try {
+      const project = await api.createProject({
+        title: prompt.title,
+        description: prompt.description,
+        canvasData: { nodes: [], edges: [] },
+        genre: 'Challenge',
+      });
+      navigate(`/editor/${project.id}`);
+      api.completeGoal('complete_challenge').catch(() => {});
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -268,111 +330,188 @@ export default function Community() {
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Featured Universes */}
+            {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
-                <h2 className="font-headline-md text-on-surface">Featured Universes</h2>
-                <button className="font-label-sm text-primary hover:text-primary-container transition-colors flex items-center gap-1">
-                  Explore All <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </button>
-              </div>
+              {activeTab === 'world-feed' && (
+                <>
+                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
+                    <h2 className="font-headline-md text-on-surface">Featured Universes</h2>
+                    <button className="font-label-sm text-primary hover:text-primary-container transition-colors flex items-center gap-1">
+                      Explore All <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                  </div>
 
-              {/* Genre Filters */}
-              <div className="flex flex-wrap gap-2">
-                {GENRES.map((genre) => (
-                  <button
-                    key={genre}
-                    onClick={() => setActiveGenre(genre)}
-                    className={`px-4 py-1.5 rounded-full border font-label-sm text-label-sm whitespace-nowrap transition-colors ${
-                      activeGenre === genre
-                        ? 'border-primary-container text-primary-container bg-primary-container/10'
-                        : 'border-outline-variant/40 text-on-surface-variant hover:border-primary-container/50 hover:text-on-surface'
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
-              </div>
-
-              {loading ? (
-                <p className="text-on-surface-variant text-sm">Loading universes…</p>
-              ) : filteredProjects.length === 0 ? (
-                <p className="text-on-surface-variant text-sm">No universes found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredProjects.map((p) => {
-                    const nodeCount = (p.canvas_data?.nodes || []).length;
-                    return (
-                      <Link
-                        key={p.id}
-                        to={`/project/${p.id}`}
-                        className="glass-card rounded-xl overflow-hidden flex flex-col group cursor-pointer"
+                  {/* Genre Filters */}
+                  <div className="flex flex-wrap gap-2">
+                    {GENRES.map((genre) => (
+                      <button
+                        key={genre}
+                        onClick={() => setActiveGenre(genre)}
+                        className={`px-4 py-1.5 rounded-full border font-label-sm text-label-sm whitespace-nowrap transition-colors ${
+                          activeGenre === genre
+                            ? 'border-primary-container text-primary-container bg-primary-container/10'
+                            : 'border-outline-variant/40 text-on-surface-variant hover:border-primary-container/50 hover:text-on-surface'
+                        }`}
                       >
-                        <div className="h-40 w-full relative overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent z-10" />
-                          {p.cover_image ? (
-                            <img src={`${API_BASE}${p.cover_image}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          ) : (
-                            <div className="w-full h-full bg-surface-container" />
-                          )}
-                          <div className="absolute top-3 right-3 z-20 bg-surface-container/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 border border-outline-variant/50">
-                            {(p.trending_score > 10 || (p.like_count > 5 || p.fork_count > 3)) && (
-                              <>
-                                <span className="material-symbols-outlined text-xs text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                <span className="font-label-sm text-on-surface">Trending</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="p-5 flex flex-col flex-grow relative z-20 -mt-6">
-                          <h3 className="font-headline-md text-primary mb-2">{p.title}</h3>
-                          {p.description && (
-                            <p className="font-body-md text-on-surface-variant mb-4 line-clamp-2">{p.description}</p>
-                          )}
-                          <div className="mt-auto pt-4 border-t border-outline-variant/20 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Link to={`/profile/${p.username || 'Architect'}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                <div className="w-6 h-6 rounded-full overflow-hidden bg-surface-variant">
-                                  <img alt="" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew" />
+                        {genre}
+                      </button>
+                    ))}
+                  </div>
+
+                  {loading ? (
+                    <p className="text-on-surface-variant text-sm">Loading universes…</p>
+                  ) : filteredProjects.length === 0 ? (
+                    <p className="text-on-surface-variant text-sm">No universes found.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredProjects.map((p) => {
+                        const nodeCount = (p.canvas_data?.nodes || []).length;
+                        return (
+                          <Link
+                            key={p.id}
+                            to={`/project/${p.id}`}
+                            className="glass-card rounded-xl overflow-hidden flex flex-col group cursor-pointer"
+                          >
+                            <div className="h-40 w-full relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent z-10" />
+                              {p.cover_image ? (
+                                <img src={`${API_BASE}${p.cover_image}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              ) : (
+                                <div className="w-full h-full bg-surface-container" />
+                              )}
+                              <div className="absolute top-3 right-3 z-20 bg-surface-container/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 border border-outline-variant/50">
+                                {(p.trending_score > 10 || (p.like_count > 5 || p.fork_count > 3)) && (
+                                  <>
+                                    <span className="material-symbols-outlined text-xs text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                    <span className="font-label-sm text-on-surface">Trending</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="p-5 flex flex-col flex-grow relative z-20 -mt-6">
+                              <h3 className="font-headline-md text-primary mb-2">{p.title}</h3>
+                              {p.description && (
+                                <p className="font-body-md text-on-surface-variant mb-4 line-clamp-2">{p.description}</p>
+                              )}
+                              <div className="mt-auto pt-4 border-t border-outline-variant/20 flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <Link to={`/profile/${p.username || 'Architect'}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                    <div className="w-6 h-6 rounded-full overflow-hidden bg-surface-variant">
+                                      <img alt="" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew" />
+                                    </div>
+                                    <span className="font-label-sm text-on-surface-variant">@{p.username || 'Architect'}</span>
+                                  </Link>
                                 </div>
-                                <span className="font-label-sm text-on-surface-variant">@{p.username || 'Architect'}</span>
-                              </Link>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleFork(p.id);
+                                    }}
+                                    disabled={forkingId === p.id}
+                                    className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">fork_right</span>
+                                    <span className="font-label-sm">{p.fork_count || 0}</span>
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleLike(p.id);
+                                    }}
+                                    className="flex items-center gap-1 text-on-surface-variant hover:text-red-400 transition-colors"
+                                  >
+                                    <span
+                                      className="material-symbols-outlined text-sm"
+                                      style={{ fontVariationSettings: likedProjects[p.id] ? "'FILL' 1" : "'FILL' 0" }}
+                                    >
+                                      favorite
+                                    </span>
+                                    <span className="font-label-sm">{likeCounts[p.id] ?? p.like_count ?? 0}</span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex gap-3">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleFork(p.id);
-                                }}
-                                disabled={forkingId === p.id}
-                                className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50"
-                              >
-                                <span className="material-symbols-outlined text-sm">fork_right</span>
-                                <span className="font-label-sm">{p.fork_count || 0}</span>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleLike(p.id);
-                                }}
-                                className="flex items-center gap-1 text-on-surface-variant hover:text-red-400 transition-colors"
-                              >
-                                <span
-                                  className="material-symbols-outlined text-sm"
-                                  style={{ fontVariationSettings: likedProjects[p.id] ? "'FILL' 1" : "'FILL' 0" }}
-                                >
-                                  favorite
-                                </span>
-                                <span className="font-label-sm">{likeCounts[p.id] ?? p.like_count ?? 0}</span>
-                              </button>
-                            </div>
-                          </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+              {activeTab === 'prompts' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
+                    <h2 className="font-headline-md text-on-surface">Writing Prompts</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {PROMPTS.map((prompt) => (
+                      <div key={prompt.id} className="glass-card rounded-xl p-5 flex flex-col gap-3 hover:border-primary-container/40 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary">{prompt.icon}</span>
+                          <h3 className="font-headline-md text-[20px] text-on-surface">{prompt.title}</h3>
                         </div>
-                      </Link>
-                    );
-                  })}
+                        <p className="font-body-md text-on-surface-variant flex-1">{prompt.description}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">{prompt.difficulty}</span>
+                          <button onClick={() => handleAcceptChallenge(prompt)} className="font-label-sm text-primary hover:text-primary-container transition-colors border border-outline-variant/30 rounded-lg px-3 py-1.5 hover:border-primary-container/50">
+                            Accept Challenge
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === 'architects' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
+                    <h2 className="font-headline-md text-on-surface">All Architects</h2>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {architects.map((architect) => {
+                      const isFollowing = followingIds[architect.id] || false;
+                      const isLoading = followLoadingIds[architect.id] || false;
+                      return (
+                        <div key={architect.id} className="flex items-center justify-between p-3 glass-card rounded-xl hover:bg-surface-container-high/50">
+                          <Link to={`/profile/${architect.username}`} className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="relative shrink-0">
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-outline-variant/50">
+                                <Avatar src={architect.avatar} alt={architect.username} className="w-full h-full object-cover" />
+                              </div>
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-label-md text-on-surface truncate">{architect.username}</span>
+                              <span className="font-label-sm text-on-surface-variant">Architect</span>
+                            </div>
+                          </Link>
+                          {user && architect.id !== user.id && (
+                            <button
+                              onClick={() => handleArchitectFollow(architect.id)}
+                              disabled={isLoading}
+                              className={`font-label-sm border rounded-full px-3 py-1 transition-colors ${
+                                isFollowing
+                                  ? 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30'
+                                  : 'border-primary-container/50 text-primary-container hover:bg-primary-container hover:text-on-primary-container'
+                              } disabled:opacity-50`}
+                            >
+                              {isLoading ? 'Loading…' : isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {activeTab === 'library' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
+                    <h2 className="font-headline-md text-on-surface">Community Library</h2>
+                  </div>
+                  <p className="text-on-surface-variant text-sm">Browse shared lore assets, templates, and world-building resources. Coming soon.</p>
                 </div>
               )}
             </div>
@@ -381,9 +520,10 @@ export default function Community() {
             <div className="space-y-6">
               {/* Daily Prompts */}
               <div className="space-y-4">
-                <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
+                <button onClick={() => setActiveTab('prompts')} className="flex justify-between items-end border-b border-outline-variant/30 pb-2 w-full text-left">
                   <h2 className="font-headline-md text-on-surface">Daily Prompts</h2>
-                </div>
+                  <span className="material-symbols-outlined text-sm text-on-surface-variant">arrow_forward</span>
+                </button>
                 <div className="glass-panel p-5 rounded-xl space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30">
@@ -397,7 +537,7 @@ export default function Community() {
                     </div>
                   </div>
                   <div className="pt-3 border-t border-outline-variant/20">
-                    <button className="w-full text-center font-label-sm text-primary hover:text-primary-container transition-colors border border-outline-variant/30 rounded-lg py-2 hover:border-primary-container/50">
+                    <button onClick={() => handleAcceptChallenge(PROMPTS[0])} className="w-full text-center font-label-sm text-primary hover:text-primary-container transition-colors border border-outline-variant/30 rounded-lg py-2 hover:border-primary-container/50">
                       Accept Challenge
                     </button>
                   </div>
