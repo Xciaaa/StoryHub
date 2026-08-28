@@ -15,6 +15,7 @@ import Timeline from '../components/Timeline';
 import Atlas from '../components/Atlas';
 import Codex from '../components/Codex';
 import Graveyard from '../components/Graveyard';
+import Help from '../components/Help';
 import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
 
@@ -376,6 +377,25 @@ export default function Editor() {
     localStorage.removeItem('token');
   }, []);
 
+  const handleCoverImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const result = await api.uploadImage(formData);
+      if (result?.url) {
+        const updated = await api.updateProject(id, {
+          canvasData: serializeCanvas({ nodes, edges }),
+          coverImage: result.url,
+        });
+        setProject(updated);
+      }
+    } catch (err) {
+      console.error('Failed to upload cover image', err);
+    }
+  };
+
   const manualSave = useCallback(async () => {
     if (!id || !navigator.onLine || savingRef.current) return;
     if (sessionExpired) return;
@@ -387,6 +407,7 @@ export default function Editor() {
       console.log('[Editor] manual save payload', payload);
       const updated = await api.updateProject(id, {
         canvasData: payload,
+        coverImage: project?.cover_image || null,
       });
       console.log('[Editor] manual save success', updated);
       setProject(updated);
@@ -405,7 +426,7 @@ export default function Editor() {
     } finally {
       savingRef.current = false;
     }
-  }, [id, nodes, edges, sessionExpired, handleSessionExpired]);
+  }, [id, nodes, edges, sessionExpired, handleSessionExpired, project?.cover_image]);
 
   useDebouncedEffect(
     () => {
@@ -423,6 +444,7 @@ export default function Editor() {
           console.log('[Editor] autosave start', { nodeCount: payload.nodes.length, edgeCount: payload.edges.length });
           const updated = await api.updateProject(id, {
             canvasData: payload,
+            coverImage: project?.cover_image || null,
           });
           console.log('[Editor] autosave success');
           setProject(updated);
@@ -551,16 +573,58 @@ export default function Editor() {
         {/* Side Navigation */}
         <aside className="flex flex-col p-4 glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full">
         <div className="flex items-center gap-4 mb-8 p-2">
-          <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm">
-            <img
-              alt="Project logo"
-              className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVhhnBZglGenWNdu9GWDta2YMl_S-oLSvIf4EKjm0hwR87TZKUcFWDoM-O9rtsO85fZDY4FuTb9k0grpDLvbDaCxMrLVVXcSNCX7__zVvyFT5t2fTcdV1BE0U4ZlgKx6JE8d25K8Gu18FyJfg7_ixb_IaHubZMfIM7ES8Fu2ACbexfeIw_73kzFLGqbwJrzHzefoXF6TiD7sVYMEuZkSAfTNnixjjd4ph6W2bBsuNofAj4nV2KtySiFQ"
+          <label className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm cursor-pointer relative group">
+            {project?.cover_image ? (
+              <img
+                alt="Project cover"
+                className="w-full h-full object-cover"
+                src={`${API_BASE}${project.cover_image}`}
+              />
+            ) : (
+              <div className="w-full h-full bg-surface-container-high flex items-center justify-center">
+                <span className="material-symbols-outlined text-[24px] text-outline">image</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="material-symbols-outlined text-[16px] text-white">edit</span>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverImageChange}
+              className="hidden"
             />
-          </div>
+          </label>
           <div>
             <h2 className="font-headline-md text-[20px] font-semibold text-on-surface truncate">{title || 'Untitled'}</h2>
-            <p className="font-body-md text-[14px] text-on-surface-variant">Novel - Sci-Fi</p>
+            <p className="font-body-md text-[14px] text-on-surface-variant">{project?.genre || 'Untitled Project'}</p>
+            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isPublic}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    setIsPublic(next);
+                    try {
+                      const updated = await api.updateProject(id, {
+                        canvasData: serializeCanvas({ nodes, edges }),
+                        coverImage: project?.cover_image || null,
+                        isPublic: next,
+                      });
+                      setProject(updated);
+                    } catch (err) {
+                      console.error('Failed to update visibility', err);
+                      setIsPublic(!next);
+                    }
+                  }}
+                />
+                <div className="w-9 h-5 bg-surface-variant rounded-full peer-checked:bg-indigo-electric transition-colors" />
+                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
+              </div>
+              <span className="font-label-sm text-[12px] text-on-surface-variant">{isPublic ? 'Public' : 'Private'}</span>
+            </label>
           </div>
         </div>
           <div className="mb-6 flex flex-col gap-2">
@@ -648,7 +712,14 @@ export default function Editor() {
           </button>
         </nav>
         <div className="mt-auto border-t border-outline-variant/30 pt-4 flex flex-col gap-1.5">
-          <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
+          <button
+            onClick={() => setActiveTab('help')}
+            className={`flex items-center gap-3 p-2.5 rounded-lg font-label-md text-label-md text-left ${
+              activeTab === 'help'
+                ? 'text-indigo-300 bg-indigo-900/40 border border-indigo-500/20 shadow-inner shadow-white/5'
+                : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all'
+            }`}
+          >
             <span className="material-symbols-outlined text-[20px]">help</span>
             Help
           </button>
@@ -740,6 +811,7 @@ export default function Editor() {
                 updateNodeData={updateNodeData}
               />
             )}
+            {activeTab === 'help' && <Help />}
           </div>
         )}
       </main>

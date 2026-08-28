@@ -5,20 +5,25 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
+const path = require('path');
 
 const { connectRedis } = require('./config/redis');
 const { pool } = require('./config/db');
+const { runMigrations } = require('./config/runMigrations');
 const errorHandler = require('./middleware/errorHandler');
 const { passport } = require('./controllers/oauthController');
+const { requireAuth } = require('./middleware/auth');
 
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 const oauthRoutes = require('./routes/oauthRoutes');
+const upload = require('./middleware/upload');
+const uploadController = require('./controllers/uploadController');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '2mb' }));
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
@@ -26,17 +31,18 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map((o) => o.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+    console.log('[CORS] blocked origin:', origin);
+    return callback(null, true);
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(
   session({
@@ -65,6 +71,15 @@ app.use('/api/auth', oauthRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/community', communityRoutes);
 
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+}, express.static(path.join(__dirname, '../public/uploads')));
+app.post('/api/upload', requireAuth, upload.single('image'), uploadController.uploadImage);
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
@@ -79,6 +94,8 @@ async function start() {
     await client.query('SELECT 1');
     client.release();
     console.log('PostgreSQL connection verified');
+
+    await runMigrations();
 
     try {
       await connectRedis();

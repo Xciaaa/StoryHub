@@ -25,3 +25,6 @@ server/pgdata/
 Thumbs.db
 .vscode/
 .idea/
+
+# Uploaded images
+server/public/uploads/

@@ -24,12 +24,12 @@ async function deleteCached(key) {
  * Create a project. canvas_data is passed as a JS object — node-postgres
  * serializes it to JSON automatically when the column type is JSONB.
  */
-async function createProject({ userId, title, description, canvasData }) {
+async function createProject({ userId, title, description, canvasData, coverImage, genre }) {
   const result = await query(
-    `INSERT INTO projects (user_id, title, description, canvas_data)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, user_id, title, description, is_public, canvas_data, updated_at`,
-    [userId, title, description || null, canvasData || { nodes: [], edges: [] }]
+    `INSERT INTO projects (user_id, title, description, canvas_data, cover_image, genre)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, user_id, title, description, is_public, canvas_data, cover_image, genre, updated_at`,
+    [userId, title, description || null, canvasData || { nodes: [], edges: [] }, coverImage || null, genre || null]
   );
   return result.rows[0];
 }
@@ -39,7 +39,7 @@ async function createProject({ userId, title, description, canvasData }) {
  */
 async function getOwnedProject({ id, userId }) {
   const result = await query(
-    `SELECT id, user_id, title, description, is_public, canvas_data, updated_at
+    `SELECT id, user_id, title, description, is_public, canvas_data, cover_image, genre, updated_at
      FROM projects
      WHERE id = $1 AND user_id = $2`,
     [id, userId]
@@ -49,7 +49,7 @@ async function getOwnedProject({ id, userId }) {
 
 async function listProjectsForUser(userId) {
   const result = await query(
-    `SELECT id, title, description, is_public, canvas_data, updated_at
+    `SELECT id, title, description, is_public, canvas_data, cover_image, genre, updated_at
      FROM projects
      WHERE user_id = $1
      ORDER BY updated_at DESC`,
@@ -61,6 +61,8 @@ async function listProjectsForUser(userId) {
     description: row.description,
     is_public: row.is_public,
     canvas_data: row.canvas_data || { nodes: [], edges: [] },
+    cover_image: row.cover_image || null,
+    genre: row.genre || null,
     updated_at: row.updated_at,
     node_count: (row.canvas_data?.nodes || []).length,
   }));
@@ -73,17 +75,19 @@ async function listProjectsForUser(userId) {
  * regardless of whether is_public is currently true, in case it was
  * just toggled off (nothing to lose) or stays on (must be fresh).
  */
-async function updateProject({ id, userId, title, description, canvasData, isPublic }) {
+async function updateProject({ id, userId, title, description, canvasData, isPublic, coverImage, genre }) {
   const result = await query(
     `UPDATE projects
-     SET title       = COALESCE($3, title),
-         description = COALESCE($4, description),
-         canvas_data = COALESCE($5, canvas_data),
-         is_public   = COALESCE($6, is_public),
-         updated_at  = NOW()
+     SET title        = COALESCE($3, title),
+         description  = COALESCE($4, description),
+         canvas_data  = COALESCE($5, canvas_data),
+         is_public    = COALESCE($6, is_public),
+         cover_image  = COALESCE($7, cover_image),
+         genre        = COALESCE($8, genre),
+         updated_at   = NOW()
      WHERE id = $1 AND user_id = $2
-     RETURNING id, user_id, title, description, is_public, canvas_data, updated_at`,
-    [id, userId, title ?? null, description ?? null, canvasData ?? null, isPublic ?? null]
+     RETURNING id, user_id, title, description, is_public, canvas_data, cover_image, genre, updated_at`,
+    [id, userId, title ?? null, description ?? null, canvasData ?? null, isPublic ?? null, coverImage ?? null, genre ?? null]
   );
 
   const updated = result.rows[0] || null;
@@ -199,7 +203,7 @@ async function getPublicProject(id) {
   }
 
   const result = await query(
-    `SELECT id, title, description, canvas_data, updated_at
+    `SELECT id, title, description, canvas_data, cover_image, updated_at
      FROM projects
      WHERE id = $1 AND is_public = true`,
     [id]
@@ -228,7 +232,7 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   }
 
   const result = await query(
-    `SELECT id, title, description, updated_at
+    `SELECT id, title, description, cover_image, updated_at
      FROM projects
      WHERE is_public = true
      ORDER BY updated_at DESC

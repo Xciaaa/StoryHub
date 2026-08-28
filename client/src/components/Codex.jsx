@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { API_BASE } from '../lib/api';
 
 const CATEGORIES = ['Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'];
 const STATUSES = ['Draft', 'In Progress', 'Finalized'];
@@ -343,20 +344,43 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
 
                     {isEditing ? (
                       <div ref={editCardRef} className="space-y-3">
-                        <input
-                          autoFocus
-                          value={draft[entry.id]?.label || ''}
-                          onChange={(e) => startEdit(entry, 'label', e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
-                          placeholder="Entry title"
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                        />
-                        <select
-                          value={draft[entry.id]?.status || 'Draft'}
-                          onChange={(e) => startEdit(entry, 'status', e.target.value)}
-                          onBlur={() => commit(entry)}
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                        >
+                          <input
+                            autoFocus
+                            value={draft[entry.id]?.label || ''}
+                            onChange={(e) => startEdit(entry, 'label', e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
+                            placeholder="Entry title"
+                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          />
+                          <div className="space-y-2">
+                            <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide">Image</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const formData = new FormData();
+                                formData.append('image', file);
+                                try {
+                                  const result = await api.uploadImage(formData);
+                                  if (result?.url) startEdit(entry, 'image', result.url);
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }}
+                              className="block text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-electric/20 file:text-indigo-electric hover:file:bg-indigo-electric/30"
+                            />
+                            {draft[entry.id]?.image && (
+                              <img src={`${API_BASE}${draft[entry.id].image}`} alt="Preview" className="mt-2 h-24 w-auto rounded-lg border border-outline-variant/30 object-cover" />
+                            )}
+                          </div>
+                          <select
+                            value={draft[entry.id]?.status || 'Draft'}
+                            onChange={(e) => startEdit(entry, 'status', e.target.value)}
+                            onBlur={() => commit(entry)}
+                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          >
                           {STATUSES.map((s) => (
                             <option key={s} value={s}>{s}</option>
                           ))}
@@ -395,6 +419,9 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                       ) : (
                         <>
                           <h3 className="font-headline-md text-headline-md text-on-surface mb-2 group-hover:text-primary transition-colors">{data.label || 'Untitled'}</h3>
+                           {data.image && (
+                             <img src={`${API_BASE}${data.image}`} alt={data.label || 'Entry'} className="mb-4 h-32 w-full object-cover rounded-lg border border-outline-variant/20" />
+                           )}
                           {data.description && (
                             <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-4 flex-grow">{data.description}</p>
                           )}
@@ -463,6 +490,9 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
+                {data.image && (
+                  <img src={`${API_BASE}${data.image}`} alt={data.label || 'Entry'} className="w-full h-48 object-cover rounded-lg border border-outline-variant/20 mb-4" />
+                )}
                 {data.description && (
                   <div className="border-t border-outline-variant/20 pt-4 mb-4">
                     <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Summary</h4>

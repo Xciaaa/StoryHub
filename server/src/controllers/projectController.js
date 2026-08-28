@@ -20,7 +20,7 @@ function isValidCanvasData(canvasData) {
 }
 
 const createProject = asyncHandler(async (req, res) => {
-  const { title, description, canvasData } = req.body;
+  const { title, description, canvasData, coverImage, genre } = req.body;
 
   if (!title) {
     return res.status(400).json({ error: 'title is required' });
@@ -34,6 +34,8 @@ const createProject = asyncHandler(async (req, res) => {
     title,
     description,
     canvasData,
+    coverImage,
+    genre,
   });
 
   return res.status(201).json(project);
@@ -58,7 +60,7 @@ const getProject = asyncHandler(async (req, res) => {
 });
 
 const updateProject = asyncHandler(async (req, res) => {
-  const { title, description, canvasData, isPublic } = req.body;
+  const { title, description, canvasData, isPublic, coverImage, genre } = req.body;
 
   if (!isValidCanvasData(canvasData)) {
     return res.status(400).json({ error: 'canvasData must be an object with nodes[] and edges[]' });
@@ -71,6 +73,8 @@ const updateProject = asyncHandler(async (req, res) => {
     description,
     canvasData,
     isPublic,
+    coverImage,
+    genre,
   });
 
   if (!project) {

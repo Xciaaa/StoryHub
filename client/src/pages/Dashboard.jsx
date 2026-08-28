@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 function getNodeCount(canvasData) {
@@ -32,8 +32,10 @@ export default function Dashboard() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [genre, setGenre] = useState(GENRES[0]);
+  const [coverImage, setCoverImage] = useState('');
   const [stats, setStats] = useState({ totalNodes: 0, connections: 0, wordsMapped: 0, editsThisWeek: 0 });
   const [activity, setActivity] = useState([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const loadProjects = async () => {
     setLoading(true);
@@ -62,6 +64,7 @@ export default function Dashboard() {
     setTitle('');
     setDescription('');
     setGenre(GENRES[0]);
+    setCoverImage('');
     setIsModalOpen(true);
   };
 
@@ -78,6 +81,8 @@ export default function Dashboard() {
         title: title.trim(),
         description: description.trim() || null,
         canvasData: { nodes: [], edges: [] },
+        coverImage: coverImage || null,
+        genre: genre.trim() || null,
       });
       closeModal();
       navigate(`/editor/${project.id}`);
@@ -89,14 +94,23 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this project? This cannot be undone.')) return;
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await api.deleteProject(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-      loadProjects();
+      await api.deleteProject(deleteConfirmId);
+      setProjects((prev) => prev.filter((p) => p.id !== deleteConfirmId));
     } catch (err) {
       setError(err.message);
+    } finally {
+      setDeleteConfirmId(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   const totalNodes = projects.reduce((sum, p) => sum + (p.node_count ?? getNodeCount(p.canvas_data)), 0);
@@ -211,8 +225,6 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {visibleProjects.map((p, index) => {
                 const nodeCount = p.node_count ?? getNodeCount(p.canvas_data);
-                const edgeCount = (p.canvas_data?.edges || []).length;
-                const progress = Math.min(100, Math.max(5, (nodeCount / 500) * 100));
 
                 return (
                   <Link
@@ -221,25 +233,57 @@ export default function Dashboard() {
                     className="story-card-hover relative h-[380px] rounded-xl overflow-hidden glass-panel cursor-pointer group block"
                   >
                     <div className="absolute inset-0 z-0">
-                      <div
-                        className="absolute inset-0 opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
-                        style={{ background: getThumbnailStyle(index) }}
-                      />
+                      {p.cover_image ? (
+                        <img src={`${API_BASE}${p.cover_image}`} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+                      ) : (
+                        <div
+                          className="absolute inset-0 opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+                          style={{ background: getThumbnailStyle(index) }}
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-slate-900/60 to-transparent" />
                     </div>
                     <div className="relative z-10 p-6 h-full flex flex-col justify-between">
                       <div className="flex justify-between items-start">
-                        <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/30">
-                          {p.is_public ? 'Public' : 'Private'}
-                        </span>
-                        <div className="w-12 h-12 relative">
-                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                            <path className="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2" />
-                            <path className="text-indigo-electric" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progress}, 100`} strokeWidth="2" />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center font-label-sm text-label-sm text-on-surface">
-                            {Math.round(progress)}%
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const next = !p.is_public;
+                              try {
+                                const updated = await api.updateProject(p.id, {
+                                  isPublic: next,
+                                });
+                                setProjects((prev) => prev.map((project) => project.id === p.id ? { ...project, is_public: updated.is_public } : project));
+                              } catch (err) {
+                                console.error('Failed to update visibility', err);
+                                setError(err.message || 'Failed to update project visibility');
+                              }
+                            }}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${p.is_public ? 'bg-indigo-electric' : 'bg-surface-variant'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${p.is_public ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </button>
+                          <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/30">
+                            {p.is_public ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface border border-outline-variant/30">
+                            {nodeCount} nodes
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleDelete(p.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-surface-container/80 backdrop-blur-md text-on-surface-variant hover:text-red-400 border border-outline-variant/30 transition-all"
+                            title="Delete project"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
                         </div>
                       </div>
                       <div>
@@ -369,6 +413,30 @@ export default function Dashboard() {
                     rows={4}
                   />
                 </div>
+                {/* Cover Image */}
+                <div className="space-y-2">
+                  <label className="font-label-md text-label-md text-on-surface block">Cover Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const formData = new FormData();
+                      formData.append('image', file);
+                      try {
+                        const result = await api.uploadImage(formData);
+                        if (result?.url) setCoverImage(result.url);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="block text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-electric/20 file:text-indigo-electric hover:file:bg-indigo-electric/30"
+                  />
+                  {coverImage && (
+                    <img src={`${API_BASE}${coverImage}`} alt="Cover preview" className="mt-2 h-32 w-full object-cover rounded-lg border border-outline-variant/30" />
+                  )}
+                </div>
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">
                   <button
@@ -387,6 +455,35 @@ export default function Dashboard() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={cancelDelete} />
+          <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline/30 shadow-2xl overflow-hidden">
+            <div className="p-6">
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Delete Project</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                Are you sure you want to delete this project? This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 rounded-lg border border-outline/10 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-error text-on-error hover:bg-error/90 font-label-md text-label-md transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

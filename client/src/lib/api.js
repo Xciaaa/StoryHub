@@ -58,6 +58,23 @@ export const api = {
   getPublicProject: (id) => request(`/api/community/projects/${id}`, { auth: false }),
   listPublicProjects: (page = 1, limit = 20) =>
     request(`/api/community/projects?page=${page}&limit=${limit}`, { auth: false }),
+
+  uploadImage: (formData) => {
+    const token = getToken();
+    const headers = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    }).then(async (res) => {
+      if (res.status === 204) return null;
+      let data = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error(data?.error || `Upload failed (${res.status})`);
+      return data;
+    });
+  },
 };
 
 export { API_BASE, getToken };
