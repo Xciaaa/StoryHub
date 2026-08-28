@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, API_BASE } from '../lib/api';
 import Avatar from '../components/Avatar';
+import Logo from '../components/Logo';
 
 const FILTERS = [
   { key: 'all', label: 'All' },

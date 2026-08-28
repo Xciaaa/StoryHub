@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import Logo from '../components/Logo';
+import NotificationBell from '../components/NotificationBell';
+import { useToast } from '../context/ToastContext';
 
 const GENRES = ['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
 
@@ -54,6 +57,7 @@ const PROMPTS = [
 export default function Community() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [projects, setProjects] = useState([]);
   const [architects, setArchitects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +70,16 @@ export default function Community() {
   const [likeCounts, setLikeCounts] = useState({});
   const [followingIds, setFollowingIds] = useState({});
   const [followLoadingIds, setFollowLoadingIds] = useState({});
+  const [savedProjects, setSavedProjects] = useState({});
+  const [saveLoadingIds, setSaveLoadingIds] = useState({});
+  const [savedLibrary, setSavedLibrary] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryGenre, setLibraryGenre] = useState('All');
+  const [librarySort, setLibrarySort] = useState('recent');
+  const [libraryViewMode, setLibraryViewMode] = useState('grid');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -84,6 +98,7 @@ export default function Community() {
 
       const likes = {};
       const counts = {};
+      const saves = {};
       await Promise.all(
         projectsData.map(async (p) => {
           try {
@@ -97,10 +112,17 @@ export default function Community() {
             likes[p.id] = false;
             counts[p.id] = 0;
           }
+          try {
+            const saveStatus = await api.getSaveStatus(p.id);
+            saves[p.id] = saveStatus.saved;
+          } catch {
+            saves[p.id] = false;
+          }
         })
       );
       setLikedProjects(likes);
       setLikeCounts(counts);
+      setSavedProjects(saves);
 
       if (user) {
         const followStatuses = {};
@@ -123,6 +145,28 @@ export default function Community() {
       setLoading(false);
     }
   }
+
+  const loadLibrary = async () => {
+    console.log('[Community] loadLibrary start');
+    setLibraryLoading(true);
+    setLibraryError('');
+    try {
+      const data = await api.listSavedProjects();
+      console.log('[Community] loadLibrary result', data);
+      setSavedLibrary(data);
+    } catch (err) {
+      console.error('[Community] loadLibrary failed', err);
+      setLibraryError(err.message || 'Failed to load saved projects');
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'library') {
+      loadLibrary();
+    }
+  }, [activeTab]);
 
   const handleArchitectFollow = async (architectId) => {
     if (!user) return;
@@ -158,9 +202,9 @@ export default function Community() {
     setForkingId(projectId);
     try {
       await api.forkProject(projectId);
-      alert('Project forked to your account!');
+      toast.addToast('Project forked to your account!', 'success');
     } catch (err) {
-      alert(err.message);
+      toast.addToast(err.message, 'error');
     } finally {
       setForkingId(null);
     }
@@ -176,6 +220,26 @@ export default function Community() {
     }
   };
 
+  const handleSave = async (projectId) => {
+    if (!user) return;
+    setSaveLoadingIds((prev) => ({ ...prev, [projectId]: true }));
+    try {
+      if (savedProjects[projectId]) {
+        console.log('[Community] unsave', projectId);
+        await api.unsaveProject(projectId);
+        setSavedProjects((prev) => ({ ...prev, [projectId]: false }));
+      } else {
+        console.log('[Community] save', projectId);
+        await api.saveProject(projectId);
+        setSavedProjects((prev) => ({ ...prev, [projectId]: true }));
+      }
+    } catch (err) {
+      console.error('[Community] save failed', err);
+    } finally {
+      setSaveLoadingIds((prev) => ({ ...prev, [projectId]: false }));
+    }
+  };
+
   const handleAcceptChallenge = async (prompt) => {
     if (!user) return;
     try {
@@ -188,7 +252,7 @@ export default function Community() {
       navigate(`/editor/${project.id}`);
       api.completeGoal('complete_challenge').catch(() => {});
     } catch (err) {
-      alert(err.message);
+      toast.addToast(err.message, 'error');
     }
   };
 
@@ -214,9 +278,7 @@ export default function Community() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link to="/notifications" className="text-on-surface-variant hover:text-primary-container transition-colors p-2 rounded-full hover:bg-surface-variant/20">
-            <span className="material-symbols-outlined">notifications</span>
-          </Link>
+          <NotificationBell />
           <Link to="/settings" className="text-on-surface-variant hover:text-primary-container transition-colors p-2 rounded-full hover:bg-surface-variant/20">
             <span className="material-symbols-outlined">settings</span>
           </Link>
@@ -306,13 +368,9 @@ export default function Community() {
             <span className="material-symbols-outlined text-sm">settings</span>
             Settings
           </Link>
-          <button className="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/20 rounded-xl font-label-sm transition-all">
+          <button type="button" onClick={() => setHelpOpen(!helpOpen)} className={`flex items-center gap-3 px-4 py-2 rounded-xl font-label-sm transition-all ${helpOpen ? 'bg-surface-variant/30 text-on-surface' : 'text-on-surface-variant hover:bg-surface-variant/20'}`}>
             <span className="material-symbols-outlined text-sm">help</span>
             Help
-          </button>
-          <button onClick={logout} className="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/20 rounded-xl font-label-sm transition-all">
-            <span className="material-symbols-outlined text-sm">logout</span>
-            Logout
           </button>
         </div>
       </aside>
@@ -359,7 +417,12 @@ export default function Community() {
                   </div>
 
                   {loading ? (
-                    <p className="text-on-surface-variant text-sm">Loading universes…</p>
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <div className="logo-continuous-loop">
+                        <Logo className="w-12 h-12" />
+                      </div>
+                      <p className="text-on-surface-variant text-sm">Loading universes…</p>
+                    </div>
                   ) : filteredProjects.length === 0 ? (
                     <p className="text-on-surface-variant text-sm">No universes found.</p>
                   ) : (
@@ -403,6 +466,23 @@ export default function Community() {
                                   </Link>
                                 </div>
                                 <div className="flex gap-3">
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleSave(p.id);
+                                    }}
+                                    disabled={saveLoadingIds[p.id]}
+                                    className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50"
+                                  >
+                                    <span
+                                      className="material-symbols-outlined text-sm"
+                                      style={{ fontVariationSettings: savedProjects[p.id] ? "'FILL' 1" : "'FILL' 0" }}
+                                    >
+                                      bookmark
+                                    </span>
+                                    <span className="font-label-sm">{savedProjects[p.id] ? 'Saved' : 'Save'}</span>
+                                  </button>
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -508,10 +588,212 @@ export default function Community() {
               )}
               {activeTab === 'library' && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
-                    <h2 className="font-headline-md text-on-surface">Community Library</h2>
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                      <h2 className="font-headline-md text-on-surface">Saved Projects</h2>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Community projects you've bookmarked.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <input
+                        type="text"
+                        value={librarySearch}
+                        onChange={(e) => setLibrarySearch(e.target.value)}
+                        placeholder="Search saved projects..."
+                        className="w-full md:w-64 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                      />
+                      <select
+                        value={libraryGenre}
+                        onChange={(e) => setLibraryGenre(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container transition-all"
+                      >
+                        {['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'].map((g) => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={librarySort}
+                        onChange={(e) => setLibrarySort(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container transition-all"
+                      >
+                        <option value="recent">Recently Saved</option>
+                        <option value="title">Title</option>
+                        <option value="nodes">Most Nodes</option>
+                      </select>
+                      <div className="flex items-center gap-1 bg-surface-container border border-outline-variant/30 rounded-lg p-1">
+                        <button
+                          onClick={() => setLibraryViewMode('grid')}
+                          className={`p-1.5 rounded-md transition-colors ${libraryViewMode === 'grid' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                        </button>
+                        <button
+                          onClick={() => setLibraryViewMode('list')}
+                          className={`p-1.5 rounded-md transition-colors ${libraryViewMode === 'list' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">view_list</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-on-surface-variant text-sm">Browse shared lore assets, templates, and world-building resources. Coming soon.</p>
+
+                  {libraryError && <p className="text-sm text-error mb-4">{libraryError}</p>}
+
+                  {libraryLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <div className="logo-continuous-loop">
+                        <Logo className="w-12 h-12" />
+                      </div>
+                      <p className="text-on-surface-variant text-sm">Loading saved projects…</p>
+                    </div>
+                  ) : (() => {
+                    const filtered = savedLibrary
+                      .filter((p) => {
+                        const matchesSearch = (p.title || '').toLowerCase().includes(librarySearch.toLowerCase()) || (p.description || '').toLowerCase().includes(librarySearch.toLowerCase());
+                        const matchesGenre = libraryGenre === 'All' || p.genre === libraryGenre;
+                        return matchesSearch && matchesGenre;
+                      })
+                      .sort((a, b) => {
+                        if (librarySort === 'recent') return new Date(b.saved_at || b.updated_at) - new Date(a.saved_at || a.updated_at);
+                        if (librarySort === 'title') return (a.title || '').localeCompare(b.title || '');
+                        if (librarySort === 'nodes') return (b.node_count ?? (b.canvas_data?.nodes || []).length) - (a.node_count ?? (a.canvas_data?.nodes || []).length);
+                        return 0;
+                      });
+                    const visible = filtered.slice(0, 12);
+                    const hasMore = filtered.length > 12;
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-center py-20">
+                          <p className="text-on-surface-variant text-sm mb-4">No saved projects yet. Browse the Community and save projects you want to revisit.</p>
+                        </div>
+                      );
+                    }
+
+                    if (libraryViewMode === 'grid') {
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {visible.map((p, index) => {
+                            const nodeCount = p.node_count ?? (p.canvas_data?.nodes || []).length;
+                            return (
+                              <Link
+                                key={p.id}
+                                to={`/project/${p.id}`}
+                                className="story-card-hover relative h-[380px] rounded-xl overflow-hidden glass-panel cursor-pointer group block"
+                              >
+                                <div className="absolute inset-0 z-0">
+                                  {p.cover_image ? (
+                                    <img src={`${API_BASE}${p.cover_image}`} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+                                  ) : (
+                                    <div
+                                      className="absolute inset-0 opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+                                      style={{ background: ['linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3))', 'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3))', 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.3))'][index % 3] }}
+                                    />
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-slate-900/60 to-transparent" />
+                                </div>
+                                <div className="relative z-10 p-6 h-full flex flex-col justify-between">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/30">
+                                        {p.is_public ? 'Public' : 'Private'}
+                                      </span>
+                                      {p.genre && (
+                                        <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/30">
+                                          {p.genre}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-3 py-1 bg-surface-container/80 backdrop-blur-md rounded-full font-label-sm text-label-sm text-on-surface border border-outline-variant/30">
+                                        {nodeCount} nodes
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h3 className="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors truncate">
+                                      {p.title}
+                                    </h3>
+                                    {p.description && (
+                                      <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 line-clamp-2">{p.description}</p>
+                                    )}
+                                    <div className="hover-content opacity-0 transform translate-y-4 transition-all duration-300">
+                                      <span className="w-full py-2 bg-indigo-electric/90 backdrop-blur-sm text-on-primary rounded-lg font-label-md text-label-md hover:bg-indigo-electric transition-colors border border-indigo-electric/50 text-center block">
+                                        View Project
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="flex flex-col gap-3">
+                        {visible.map((p) => {
+                          const nodeCount = p.node_count ?? (p.canvas_data?.nodes || []).length;
+                          const edgeCount = (p.canvas_data?.edges || []).length;
+                          return (
+                            <Link
+                              key={p.id}
+                              to={`/project/${p.id}`}
+                              className="glass-panel rounded-xl p-4 flex items-center gap-4 hover:border-primary-container/40 transition-colors group block"
+                            >
+                              <div className="w-12 h-12 rounded-lg bg-surface-variant border border-outline-variant/30 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-on-surface-variant">auto_stories</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-headline-md text-headline-md text-on-surface truncate group-hover:text-primary transition-colors">{p.title}</h3>
+                                  <span className={`px-2 py-0.5 rounded-full font-label-xs text-label-xs border border-outline-variant/30 ${p.is_public ? 'bg-primary-container/10 text-primary-container' : 'bg-surface-variant text-on-surface-variant'}`}>
+                                    {p.is_public ? 'Public' : 'Private'}
+                                  </span>
+                                  {p.genre && (
+                                    <span className="px-2 py-0.5 rounded-full font-label-xs text-label-xs text-on-surface-variant border border-outline-variant/30">
+                                      {p.genre}
+                                    </span>
+                                  )}
+                                </div>
+                                {p.description && (
+                                  <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mb-1">{p.description}</p>
+                                )}
+                                <div className="flex items-center gap-4 font-label-xs text-label-xs text-on-surface-variant">
+                                  <span>{nodeCount} nodes</span>
+                                  <span>{edgeCount} edges</span>
+                                  <span>Saved {new Date(p.saved_at || p.updated_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {(() => {
+                    const filtered = savedLibrary
+                      .filter((p) => {
+                        const matchesSearch = (p.title || '').toLowerCase().includes(librarySearch.toLowerCase()) || (p.description || '').toLowerCase().includes(librarySearch.toLowerCase());
+                        const matchesGenre = libraryGenre === 'All' || p.genre === libraryGenre;
+                        return matchesSearch && matchesGenre;
+                      })
+                      .sort((a, b) => {
+                        if (librarySort === 'recent') return new Date(b.saved_at || b.updated_at) - new Date(a.saved_at || a.updated_at);
+                        if (librarySort === 'title') return (a.title || '').localeCompare(b.title || '');
+                        if (librarySort === 'nodes') return (b.node_count ?? (b.canvas_data?.nodes || []).length) - (a.node_count ?? (a.canvas_data?.nodes || []).length);
+                        return 0;
+                      });
+                    return filtered.length > 12 ? (
+                      <div className="mt-8 text-center">
+                        <button className="px-6 py-2.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface font-label-md hover:bg-surface-variant transition-colors">
+                          Load More
+                        </button>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               )}
             </div>
@@ -583,6 +865,70 @@ export default function Community() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* How to Use Community */}
+              <div className="space-y-4">
+                <button
+                  onClick={() => setHelpOpen(!helpOpen)}
+                  className="flex justify-between items-end border-b border-outline-variant/30 pb-2 w-full text-left"
+                >
+                  <h2 className="font-headline-md text-on-surface">How to Use Community</h2>
+                  <span className="material-symbols-outlined text-sm text-on-surface-variant transition-transform" style={{ transform: helpOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    expand_more
+                  </span>
+                </button>
+                {helpOpen && (
+                  <div className="glass-panel p-5 rounded-xl space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30 shrink-0">
+                          <span className="material-symbols-outlined text-sm">public</span>
+                        </div>
+                        <div>
+                          <h4 className="font-label-md text-on-surface mb-1">World Feed</h4>
+                          <p className="font-body-sm text-on-surface-variant">Browse public universes shared by other architects. Click any card to open the project and explore its canvas.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30 shrink-0">
+                          <span className="material-symbols-outlined text-sm">auto_stories</span>
+                        </div>
+                        <div>
+                          <h4 className="font-label-md text-on-surface mb-1">Library</h4>
+                          <p className="font-body-sm text-on-surface-variant">Save projects you want to revisit. Your saved projects appear in the Library tab for quick access anytime.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30 shrink-0">
+                          <span className="material-symbols-outlined text-sm">person_add</span>
+                        </div>
+                        <div>
+                          <h4 className="font-label-md text-on-surface mb-1">Follow Architects</h4>
+                          <p className="font-body-sm text-on-surface-variant">Follow creators whose worlds inspire you. Their updates and new projects will keep you connected.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30 shrink-0">
+                          <span className="material-symbols-outlined text-sm">fork_right</span>
+                        </div>
+                        <div>
+                          <h4 className="font-label-md text-on-surface mb-1">Fork Projects</h4>
+                          <p className="font-body-sm text-on-surface-variant">Found a universe you want to remix? Fork it into your own projects and start building from there.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary-container/20 rounded-lg text-primary-container border border-primary-container/30 shrink-0">
+                          <span className="material-symbols-outlined text-sm">edit_note</span>
+                        </div>
+                        <div>
+                          <h4 className="font-label-md text-on-surface mb-1">Daily Prompts</h4>
+                          <p className="font-body-sm text-on-surface-variant">Accept a writing prompt to jumpstart your next project. Each prompt is a creative challenge to expand your world.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

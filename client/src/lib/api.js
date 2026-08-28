@@ -56,6 +56,11 @@ export const api = {
   getDashboardStats: () => request('/api/projects/stats/dashboard'),
   getActivityHeatmap: () => request('/api/projects/stats/activity'),
 
+  saveProject: (id) => request(`/api/projects/${id}/save`, { method: 'POST' }),
+  unsaveProject: (id) => request(`/api/projects/${id}/save`, { method: 'DELETE' }),
+  getSaveStatus: (id) => request(`/api/projects/${id}/save`),
+  listSavedProjects: (page = 1, limit = 20) => request(`/api/projects/saved?page=${page}&limit=${limit}`),
+
   getPublicProject: (id) => request(`/api/community/projects/${id}`, { auth: false }),
   listPublicProjects: (page = 1, limit = 20) =>
     request(`/api/community/projects?page=${page}&limit=${limit}`, { auth: false }),

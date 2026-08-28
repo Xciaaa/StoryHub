@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import Logo from '../components/Logo';
+import NotificationBell from '../components/NotificationBell';
 
 function getNodeCount(canvasData) {
   if (!canvasData) return 0;
@@ -166,9 +168,7 @@ export default function Dashboard() {
           >
             <span className="material-symbols-outlined">search</span>
           </button>
-          <Link to="/notifications" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
-            <span className="material-symbols-outlined">notifications</span>
-          </Link>
+          <NotificationBell />
           <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
             <span className="material-symbols-outlined">settings</span>
           </Link>
@@ -230,7 +230,12 @@ export default function Dashboard() {
           </div>
           {error && <p className="text-sm text-error mb-4">{error}</p>}
           {loading ? (
-            <p className="text-on-surface-variant text-sm">Loading projects…</p>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="logo-continuous-loop">
+                <Logo className="w-12 h-12" />
+              </div>
+              <p className="text-on-surface-variant text-sm">Loading projects…</p>
+            </div>
           ) : projects.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-on-surface-variant text-sm mb-4">No projects yet — create your first story above.</p>
@@ -357,6 +362,13 @@ export default function Dashboard() {
                     />
                   );
                 })}
+              </div>
+              <div className="grid grid-flow-col gap-1 min-w-max mt-1">
+                {heatmapData.filter((_, i) => i % 4 === 3).map((day) => (
+                  <div key={day.date} className="w-8 text-center font-label-xs text-label-xs text-on-surface-variant">
+                    {new Date(day.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

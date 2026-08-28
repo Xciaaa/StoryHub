@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login, { OAuthCallback } from './pages/Login';
@@ -12,15 +13,17 @@ import PublicProject from './pages/PublicProject';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import LoadingPage from './components/LoadingPage';
 import OnboardingGuide from './components/OnboardingGuide';
 
 export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+            <Route path="/" element={<LoadingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
@@ -66,6 +69,7 @@ export default function App() {
           </Routes>
           <OnboardingGuide />
         </BrowserRouter>
+      </ToastProvider>
       </ThemeProvider>
     </AuthProvider>
   );

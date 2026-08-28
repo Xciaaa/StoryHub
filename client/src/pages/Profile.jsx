@@ -4,6 +4,8 @@ import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Avatar from '../components/Avatar';
+import Logo from '../components/Logo';
+import NotificationBell from '../components/NotificationBell';
 
 export default function Profile() {
   const { username } = useParams();
@@ -65,10 +67,14 @@ export default function Profile() {
         return sum + count;
       }, 0);
 
+      const communityForks = userProjects.reduce((sum, p) => {
+        return sum + (p.fork_count || 0);
+      }, 0);
+
       setStats({
         universesCreated: userProjects.length,
         totalNodes,
-        communityForks: Math.floor(Math.random() * 500) + 10,
+        communityForks,
         globalInfluence: userProjects.length > 10 ? 'Top 1%' : userProjects.length > 5 ? 'Top 5%' : 'Rising',
       });
 
@@ -128,8 +134,13 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center text-sm">
-        Loading profile…
+      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="logo-continuous-loop">
+            <Logo className="w-12 h-12" />
+          </div>
+          <p className="font-body-md text-body-md">Loading profile…</p>
+        </div>
       </div>
     );
   }
@@ -170,9 +181,7 @@ export default function Profile() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/notifications" aria-label="Notifications" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
-            <span className="material-symbols-outlined">notifications</span>
-          </Link>
+          <NotificationBell />
           <Link to="/settings" aria-label="Settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
             <span className="material-symbols-outlined">settings</span>
           </Link>

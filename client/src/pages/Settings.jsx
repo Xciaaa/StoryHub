@@ -4,6 +4,8 @@ import { api, API_BASE } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Avatar from '../components/Avatar';
+import Logo from '../components/Logo';
+import NotificationBell from '../components/NotificationBell';
 
 const SECTIONS = [
   { id: 'account', label: 'Account', icon: 'person' },
@@ -127,8 +129,13 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center text-sm">
-        Loading settings…
+      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="logo-continuous-loop">
+            <Logo className="w-12 h-12" />
+          </div>
+          <p className="font-body-md text-body-md">Loading settings…</p>
+        </div>
       </div>
     );
   }
@@ -150,9 +157,7 @@ export default function Settings() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/notifications" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
-            <span className="material-symbols-outlined">notifications</span>
-          </Link>
+          <NotificationBell />
           <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
             <span className="material-symbols-outlined">settings</span>
           </Link>
@@ -465,25 +470,6 @@ export default function Settings() {
             </div>
             )}
           </section>
-
-          <div className="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline-lg text-headline-lg text-on-surface">Onboarding</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant">Reset the getting started guide if you dismissed it.</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem('onboarding_dismissed_v1');
-                  alert('Onboarding guide reset. It will appear again shortly.');
-                }}
-                className="w-full px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 font-label-md text-label-md transition-colors"
-              >
-                Reset Getting Started Guide
-              </button>
-            </div>
-          </div>
 
           <div className="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden">
             <div className="flex flex-col gap-2">

@@ -20,6 +20,8 @@ import Help from '../components/Help';
 import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
+import NotificationBell from '../components/NotificationBell';
 
 const nodeTypes = { custom: CustomNode };
 
@@ -506,8 +508,13 @@ export default function Editor() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center text-sm">
-        Loading canvas…
+      <div className="min-h-screen bg-background text-on-surface-variant flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="logo-continuous-loop">
+            <Logo className="w-12 h-12" />
+          </div>
+          <p className="font-body-md text-body-md">Loading canvas…</p>
+        </div>
       </div>
     );
   }
@@ -552,9 +559,7 @@ export default function Editor() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/notifications" className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
-            <span className="material-symbols-outlined">notifications</span>
-          </Link>
+          <NotificationBell />
           <Link to="/settings" className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
             <span className="material-symbols-outlined">settings</span>
           </Link>

@@ -169,6 +169,36 @@ const forkProject = asyncHandler(async (req, res) => {
   return res.status(201).json(forked);
 });
 
+const saveProject = asyncHandler(async (req, res) => {
+  const { id: projectId } = req.params;
+  await projectService.saveProject({ userId: req.user.id, projectId });
+  return res.status(204).send();
+});
+
+const unsaveProject = asyncHandler(async (req, res) => {
+  const { id: projectId } = req.params;
+  await projectService.unsaveProject({ userId: req.user.id, projectId });
+  return res.status(204).send();
+});
+
+const getSaveStatus = asyncHandler(async (req, res) => {
+  const { id: projectId } = req.params;
+  const saved = await projectService.isProjectSaved({ userId: req.user.id, projectId });
+  return res.json({ saved });
+});
+
+const listSavedProjects = asyncHandler(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
+  try {
+    const projects = await projectService.listSavedProjects({ userId: req.user.id, page, limit });
+    return res.json(projects);
+  } catch (err) {
+    console.error('[Server] listSavedProjects failed:', err.message);
+    return res.status(500).json({ error: 'Failed to load saved projects' });
+  }
+});
+
 module.exports = {
   createProject,
   listProjects,
@@ -180,4 +210,8 @@ module.exports = {
   getDashboardStats,
   getActivityHeatmap,
   forkProject,
+  saveProject,
+  unsaveProject,
+  getSaveStatus,
+  listSavedProjects,
 };

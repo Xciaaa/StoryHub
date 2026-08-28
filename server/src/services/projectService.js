@@ -274,6 +274,92 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   return { data: projects, fromCache: false };
 }
 
+async function saveProject({ userId, projectId }) {
+  try {
+    await query(
+      `INSERT INTO saved_projects (user_id, project_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [userId, projectId]
+    );
+    return true;
+  } catch (err) {
+    if (err.message && err.message.includes('saved_projects')) {
+      console.error('[Server] saved_projects table missing on save:', err.message);
+      throw new Error('Library feature not initialized. Please restart the server.');
+    }
+    throw err;
+  }
+}
+
+async function unsaveProject({ userId, projectId }) {
+  try {
+    await query(
+      `DELETE FROM saved_projects WHERE user_id = $1 AND project_id = $2`,
+      [userId, projectId]
+    );
+    return true;
+  } catch (err) {
+    if (err.message && err.message.includes('saved_projects')) {
+      console.error('[Server] saved_projects table missing on unsave:', err.message);
+      throw new Error('Library feature not initialized. Please restart the server.');
+    }
+    throw err;
+  }
+}
+
+async function isProjectSaved({ userId, projectId }) {
+  try {
+    const result = await query(
+      `SELECT 1 FROM saved_projects WHERE user_id = $1 AND project_id = $2 LIMIT 1`,
+      [userId, projectId]
+    );
+    return !!result.rows[0];
+  } catch (err) {
+    if (err.message && err.message.includes('saved_projects')) {
+      console.error('[Server] saved_projects table missing on status check:', err.message);
+      return false;
+    }
+    throw err;
+  }
+}
+
+async function listSavedProjects({ userId, page = 1, limit = 20 } = {}) {
+  const offset = (page - 1) * limit;
+  try {
+    const result = await query(
+      `SELECT 
+         p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, p.canvas_data,
+         u.username,
+         COUNT(DISTINCT l.user_id) AS like_count,
+         COUNT(DISTINCT f2.id) AS fork_count,
+         sp.created_at AS saved_at
+       FROM saved_projects sp
+       JOIN projects p ON p.id = sp.project_id
+       LEFT JOIN users u ON p.user_id = u.id
+       LEFT JOIN likes l ON l.project_id = p.id
+       LEFT JOIN projects f2 ON f2.parent_project_id = p.id
+       WHERE sp.user_id = $1 AND p.is_public = true
+       GROUP BY p.id, u.username, sp.created_at, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, p.canvas_data
+       ORDER BY sp.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    );
+
+    const projects = result.rows.map((row) => ({
+      ...row,
+      like_count: parseInt(row.like_count || '0', 10),
+      fork_count: parseInt(row.fork_count || '0', 10),
+    }));
+
+    return projects;
+  } catch (err) {
+    if (err.message && err.message.includes('saved_projects')) {
+      console.error('[Server] saved_projects table missing or query failed:', err.message);
+      return [];
+    }
+    throw err;
+  }
+}
+
 async function forkProject({ projectId, userId }) {
   const original = await query(
     'SELECT id, title, description, canvas_data, cover_image, genre, user_id FROM projects WHERE id = $1',
@@ -312,4 +398,8 @@ module.exports = {
   getDashboardStats,
   getActivityHeatmap,
   forkProject,
+  saveProject,
+  unsaveProject,
+  isProjectSaved,
+  listSavedProjects,
 };
