@@ -18,6 +18,7 @@ import Graveyard from '../components/Graveyard';
 import Help from '../components/Help';
 import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
+import { useAuth } from '../context/AuthContext';
 
 const nodeTypes = { custom: CustomNode };
 
@@ -58,7 +59,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
           position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
           data: { label: `New ${nodeType}`, type: nodeType, description: '' },
         })}
-        className="p-2 ml-1 bg-indigo-electric text-white rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
+        className="p-2 ml-1 bg-indigo-electric text-on-primary rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
       >
         <span className="material-symbols-outlined text-[20px]">add</span>
       </button>
@@ -66,7 +67,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
       <button
         onClick={onSave}
         disabled={saveStatus === 'saving'}
-        className="px-3 py-1.5 bg-emerald-600 text-white rounded-full hover:bg-emerald-500 transition-all text-[12px] font-semibold disabled:opacity-50 border border-emerald-400/30"
+        className="px-3 py-1.5 bg-emerald-600 text-on-primary rounded-full hover:bg-emerald-500 transition-all text-[12px] font-semibold disabled:opacity-50 border border-emerald-400/30"
       >
         {saveStatus === 'saving' ? 'Saving…' : 'Save'}
       </button>
@@ -115,6 +116,7 @@ function serializeCanvas({ nodes, edges }) {
 export default function Editor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [project, setProject] = useState(null);
   const [nodes, setNodes] = useState([]);
@@ -553,19 +555,22 @@ export default function Editor() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
+          <Link to="/notifications" className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
             <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
+          </Link>
+          <Link to="/settings" className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
             <span className="material-symbols-outlined">settings</span>
-          </button>
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 ml-2">
+          </Link>
+          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 ml-2">
             <img
               alt="User profile"
               className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg"
+              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg"}
+              onError={(e) => {
+                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuAI-LnYosoUEfBtZhFPziZoOOI6WPgwfhpJsfqUFiXPESkSAm6MknpF-z7RRiVkEhKQm9HlBHeZI16dZSZM5DkAGiXfQRGVJul9YJjDxSgsDfRq2XLTbukadda__SHJY2VN4cDhrly9FcFKiNY0Af18PRH_GmY32xvst4A7dLZuv_cUK_-56iC-2gVLyAXuauy-dWyiIWwIp-e0NtM6P1B6r3w1jLbYqSoC8CNrs7-gcGI1zUwcn6Vxwg";
+              }}
             />
-          </div>
+          </Link>
         </div>
       </nav>
 
@@ -585,8 +590,8 @@ export default function Editor() {
                 <span className="material-symbols-outlined text-[24px] text-outline">image</span>
               </div>
             )}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="material-symbols-outlined text-[16px] text-white">edit</span>
+            <div className="absolute inset-0 bg-surface-container/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="material-symbols-outlined text-[16px] text-on-primary">edit</span>
             </div>
             <input
               type="file"
@@ -631,7 +636,7 @@ export default function Editor() {
             <select
               value={newNodeType}
               onChange={(e) => setNewNodeType(e.target.value)}
-              className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm"
+              className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm"
             >
               <option value="Character">Character</option>
               <option value="Location">Location</option>
@@ -648,7 +653,7 @@ export default function Editor() {
                 position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
                 data: { label: `New ${newNodeType}`, type: newNodeType, description: '' },
               })}
-              className="w-full py-2.5 bg-indigo-electric text-white rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
+              className="w-full py-2.5 bg-indigo-electric text-on-primary rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               New Entity
@@ -723,6 +728,10 @@ export default function Editor() {
             <span className="material-symbols-outlined text-[20px]">help</span>
             Help
           </button>
+          <Link to="/settings" className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
+            <span className="material-symbols-outlined text-[20px]">settings</span>
+            Settings
+          </Link>
           <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
             <span className="material-symbols-outlined text-[20px]">rate_review</span>
             Feedback
@@ -731,33 +740,34 @@ export default function Editor() {
       </aside>
 
       {/* Main Canvas */}
-      <main className="flex-1 relative overflow-hidden h-full">
+      <main className="flex-1 relative overflow-hidden h-full min-h-0">
         {activeTab === 'nodes' ? (
-          <div className="absolute inset-0 z-10 h-full w-full" style={{ backgroundColor: '#0c1324', backgroundImage: 'radial-gradient(rgba(144, 143, 160, 0.25) 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
-              <ReactFlow
-                nodes={nodes.filter((n) => !n.data?.trashed)}
-                edges={edges.filter((e) => {
-                  const sourceNode = nodes.find((n) => n.id === e.source);
-                  const targetNode = nodes.find((n) => n.id === e.target);
-                  return sourceNode && targetNode && !sourceNode.data?.trashed && !targetNode.data?.trashed;
-                })}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeClick={onNodeClick}
-                onEdgeClick={onEdgeClick}
-                fitView={{ padding: 0.2 }}
-                nodeTypes={nodeTypes}
-                defaultEdgeOptions={{
-                  style: { stroke: '#6366f1', strokeWidth: 2 },
-                  type: 'default',
-                  labelStyle: { fill: '#908fa0', fontSize: 11 },
-                  labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
-                  labelBgPadding: [4, 2],
-                  labelBgBorderRadius: 4,
-                  selectable: true,
-                }}
-              >
+          <div className="absolute inset-0 h-full w-full">
+            <ReactFlow
+              nodes={nodes.filter((n) => !n.data?.trashed)}
+              edges={edges.filter((e) => {
+                const sourceNode = nodes.find((n) => n.id === e.source);
+                const targetNode = nodes.find((n) => n.id === e.target);
+                return sourceNode && targetNode && !sourceNode.data?.trashed && !targetNode.data?.trashed;
+              })}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              onEdgeClick={onEdgeClick}
+              fitView={{ padding: 0.2 }}
+              nodeTypes={nodeTypes}
+              defaultEdgeOptions={{
+                style: { stroke: '#6366f1', strokeWidth: 2 },
+                type: 'default',
+                labelStyle: { fill: '#908fa0', fontSize: 11 },
+                labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
+                labelBgPadding: [4, 2],
+                labelBgBorderRadius: 4,
+                selectable: true,
+              }}
+            >
+              <Background gap={32} size={1} color="rgba(144, 143, 160, 0.25)" />
               <Controls className="hidden" />
               {activeTab === 'nodes' && (
                 <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} />
@@ -819,9 +829,9 @@ export default function Editor() {
 
       {/* Slide-out Inspector Panel */}
       {inspectorOpen && selectedNode && !selectedEdge && (
-        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-slate-900/60">
+        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
           {/* Header */}
-          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-slate-900/40">
+          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-surface-container/40">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="px-2 py-0.5 rounded bg-violet-glow/20 text-violet-glow font-label-sm text-[10px] font-semibold uppercase tracking-widest border border-violet-glow/30">
@@ -838,7 +848,7 @@ export default function Editor() {
             </div>
             <button
               onClick={() => setInspectorOpen(false)}
-              className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors"
+               className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/20 transition-colors"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -855,7 +865,7 @@ export default function Editor() {
                   value={selectedNode.data.role || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
                   onBlur={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
-                  className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+                  className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
               <div className="group">
@@ -865,7 +875,7 @@ export default function Editor() {
                   value={selectedNode.data.affiliation || ''}
                   onChange={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
                   onBlur={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
-                  className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+                  className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -876,7 +886,7 @@ export default function Editor() {
                 <h3 className="font-headline-md text-[18px] font-semibold text-on-surface">Biography</h3>
               </div>
               <div
-                className="bg-black/20 rounded-lg border border-outline-variant/30 p-5 min-h-[220px] shadow-inner font-body-md text-[15px] leading-relaxed text-on-surface focus-within:border-indigo-500/50 transition-colors"
+                className="bg-surface-container/20 rounded-lg border border-outline-variant/30 p-5 min-h-[220px] shadow-inner font-body-md text-[15px] leading-relaxed text-on-surface focus-within:border-indigo-500/50 transition-colors"
               >
                 <textarea
                   value={selectedNode.data.description || ''}
@@ -905,7 +915,7 @@ export default function Editor() {
                       const otherNode = nodes.find((n) => n.id === otherId);
                       const direction = edge.source === selectedNode.id ? 'Outgoing' : 'Incoming';
                       return (
-                        <li key={edge.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer border border-outline-variant/10 hover:border-outline-variant/30 transition-all shadow-sm">
+                        <li key={edge.id} className="flex items-center justify-between p-3 rounded-lg bg-surface-variant/10 hover:bg-surface-variant/20 cursor-pointer border border-outline-variant/10 hover:border-outline-variant/30 transition-all shadow-sm">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                               <span className="material-symbols-outlined text-blue-400 text-[18px]">location_on</span>
@@ -914,7 +924,7 @@ export default function Editor() {
                               {otherNode?.data?.label || 'Untitled'}
                             </span>
                           </div>
-                          <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-black/20 rounded-md">
+                          <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-surface-container/20 rounded-md">
                             {direction} · {otherNode?.data?.type || 'Entity'}
                           </span>
                         </li>
@@ -929,8 +939,8 @@ export default function Editor() {
 
       {/* Edge Inspector */}
       {inspectorOpen && selectedEdge && (
-        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-slate-900/60">
-          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-slate-900/40">
+        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
+          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-surface-container/40">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-label-sm text-[10px] font-semibold uppercase tracking-widest border border-amber-500/30">
@@ -943,7 +953,7 @@ export default function Editor() {
             </div>
             <button
               onClick={() => setInspectorOpen(false)}
-              className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors"
+               className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/20 transition-colors"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -963,14 +973,14 @@ export default function Editor() {
                   const next = e.target.value;
                   setEdges((eds) => eds.map((edge) => edge.id === selectedEdge.id ? { ...edge, label: next } : edge));
                 }}
-                className="w-full bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+                className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
               />
             </div>
 
             <div className="border-t border-outline-variant/20 pt-8">
               <h3 className="font-headline-md text-[18px] font-semibold text-on-surface mb-4">Connection Details</h3>
               <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-outline-variant/10">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant/10 border border-outline-variant/10">
                   <div className="w-8 h-8 rounded-full bg-violet-glow/10 flex items-center justify-center border border-violet-glow/20">
                     <span className="material-symbols-outlined text-violet-glow text-[18px]">arrow_from_bracket</span>
                   </div>
@@ -979,7 +989,7 @@ export default function Editor() {
                     <p className="font-body-md text-[14px] text-on-surface">{nodes.find((n) => n.id === selectedEdge.source)?.data?.label || 'Unknown'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-outline-variant/10">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-variant/10 border border-outline-variant/10">
                   <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                     <span className="material-symbols-outlined text-blue-400 text-[18px]">arrow_to_bracket</span>
                   </div>
@@ -997,7 +1007,7 @@ export default function Editor() {
       {/* Delete Confirmation Dialog */}
       {pendingDelete && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+          <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" onClick={cancelDelete} />
           <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
             <div className="p-6">
               <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
@@ -1009,7 +1019,7 @@ export default function Editor() {
                     : `Delete ${pendingDelete.edges.length} connection(s)?`}
               </p>
             </div>
-            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+            <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"
@@ -1029,7 +1039,7 @@ export default function Editor() {
 
       {sessionExpired && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-surface-container/70 backdrop-blur-sm" />
           <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
             <div className="p-6">
               <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Session Expired</h3>
@@ -1037,10 +1047,10 @@ export default function Editor() {
                 Your session has expired or is unauthorized. Please sign in again to continue editing.
               </p>
             </div>
-            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+            <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
               <Link
                 to="/login"
-                className="px-4 py-2 rounded-lg bg-indigo-electric text-white hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors"
+                className="px-4 py-2 rounded-lg bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors"
               >
                 Back to Login
               </Link>

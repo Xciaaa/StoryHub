@@ -35,6 +35,8 @@ export default function Dashboard() {
   const [coverImage, setCoverImage] = useState('');
   const [stats, setStats] = useState({ totalNodes: 0, connections: 0, wordsMapped: 0, editsThisWeek: 0 });
   const [activity, setActivity] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const loadProjects = async () => {
@@ -147,22 +149,37 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+          {searchOpen && (
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search universes..."
+              className="w-48 md:w-64 px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+            />
+          )}
+          <button 
+            onClick={() => setSearchOpen(!searchOpen)} 
+            className="text-on-surface-variant hover:text-primary transition-colors duration-200"
+          >
             <span className="material-symbols-outlined">search</span>
           </button>
-          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+          <Link to="/notifications" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
             <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+          </Link>
+          <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
             <span className="material-symbols-outlined">settings</span>
-          </button>
-          <div className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30 ml-2">
+          </Link>
+          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30 ml-2">
             <img
               alt="User profile"
               className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q"
+              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`) : "https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q"}
+              onError={(e) => {
+                e.target.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBmW6M3gVbzficM23M0Yu8RLcIro7pEasnq7rOcmRUJ6Q4WCusCL7BReKKIK6MdtKZfdqxojALPqcCkQ3AWyPdHg93P4MbvlZNqMdjOY2X-MV5f5QY8qkhNkv1Teh5VGbiYc985f2DAn2gdT7NfYuT-njerGIiWOPWg5aiHRTcTb3hNanUYZn3WCa36KdcHlMi32NHi0PTcZyAgFX9NoCqPUtB1bwpARSOpaE_PJj_LVOE44PV6KRGa2Q";
+              }}
             />
-          </div>
+          </Link>
         </div>
       </nav>
 
@@ -170,7 +187,9 @@ export default function Dashboard() {
       <main className="md:ml-24 pt-24 pb-12 px-margin-mobile md:px-margin-desktop min-h-screen">
         {/* Hero Section */}
         <section className="mb-12">
-          <h1 className="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface mb-6">Welcome back, {user?.username || 'Architect'}</h1>
+          <Link to={`/profile/${user?.username}`} className="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface mb-6 hover:text-primary transition-colors">
+            Welcome back, {user?.username || 'Architect'}
+          </Link>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-panel p-6 rounded-xl flex flex-col justify-between relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-electric/5 to-transparent pointer-events-none" />
@@ -294,7 +313,7 @@ export default function Dashboard() {
                           <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 line-clamp-2">{p.description}</p>
                         )}
                         <div className="hover-content opacity-0 transform translate-y-4 transition-all duration-300">
-                          <span className="w-full py-2 bg-indigo-electric/90 backdrop-blur-sm text-white rounded-lg font-label-md text-label-md hover:bg-indigo-electric transition-colors border border-indigo-electric/50 text-center block">
+                           <span className="w-full py-2 bg-indigo-electric/90 backdrop-blur-sm text-on-primary rounded-lg font-label-md text-label-md hover:bg-indigo-electric transition-colors border border-indigo-electric/50 text-center block">
                             Open Canvas
                           </span>
                         </div>
@@ -352,7 +371,7 @@ export default function Dashboard() {
       {/* New Story Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md" onClick={closeModal} />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={closeModal} />
           <div className="relative w-full max-w-lg glass-panel rounded-xl border border-outline/30 shadow-2xl overflow-hidden transition-all duration-300">
             <div className="p-8">
               <div className="flex justify-between items-start mb-8">
@@ -393,7 +412,7 @@ export default function Dashboard() {
                         onClick={() => setGenre(g)}
                         className={`px-3 py-1.5 rounded-full text-label-sm font-label-sm border transition-colors ${
                           genre === g
-                            ? 'bg-indigo-electric text-white border-indigo-electric'
+                             ? 'bg-indigo-electric text-on-primary border-indigo-electric'
                             : 'bg-surface-variant text-on-surface-variant border-outline/10 hover:border-primary/30'
                         }`}
                       >
@@ -449,7 +468,7 @@ export default function Dashboard() {
                   <button
                     type="submit"
                     disabled={creating || !title.trim()}
-                    className="flex-1 px-6 py-3 rounded-lg font-label-md text-label-md bg-indigo-electric text-white hover:bg-indigo-electric/90 transition-colors shadow-lg shadow-indigo-electric/20 disabled:opacity-50"
+                     className="flex-1 px-6 py-3 rounded-lg font-label-md text-label-md bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 transition-colors shadow-lg shadow-indigo-electric/20 disabled:opacity-50"
                   >
                     {creating ? 'Creating…' : 'Create Story'}
                   </button>
@@ -463,7 +482,7 @@ export default function Dashboard() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={cancelDelete} />
+          <div className="absolute inset-0 bg-surface-container/70 backdrop-blur-md" onClick={cancelDelete} />
           <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline/30 shadow-2xl overflow-hidden">
             <div className="p-6">
               <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Delete Project</h3>
@@ -471,7 +490,7 @@ export default function Dashboard() {
                 Are you sure you want to delete this project? This action cannot be undone.
               </p>
             </div>
-            <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+            <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 rounded-lg border border-outline/10 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors"

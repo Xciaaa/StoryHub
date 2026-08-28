@@ -136,6 +136,39 @@ const getActivityHeatmap = asyncHandler(async (req, res) => {
   return res.json(data);
 });
 
+const forkProject = asyncHandler(async (req, res) => {
+  const forked = await projectService.forkProject({
+    projectId: req.params.id,
+    userId: req.user.id,
+  });
+
+  if (!forked) {
+    return res.status(404).json({ error: 'Project not found' });
+  }
+
+  const original = await projectService.getPublicProject(req.params.id).then(r => r.data);
+  const ownerId = original?.user_id;
+
+  if (ownerId && ownerId !== req.user.id) {
+    const notificationService = require('../services/notificationService');
+    const actor = await require('../services/userService').getUserById(req.user.id);
+    await notificationService.createNotification({
+      userId: ownerId,
+      type: 'fork',
+      title: `${actor.username} forked your project`,
+      description: `"${original.title}"`,
+      actorId: req.user.id,
+      actorUsername: actor.username,
+      actorAvatar: actor.avatar,
+      projectId: original.id,
+      projectTitle: original.title,
+      actionUrl: `/project/${forked.id}`,
+    });
+  }
+
+  return res.status(201).json(forked);
+});
+
 module.exports = {
   createProject,
   listProjects,
@@ -146,4 +179,5 @@ module.exports = {
   listPublicProjects,
   getDashboardStats,
   getActivityHeatmap,
+  forkProject,
 };

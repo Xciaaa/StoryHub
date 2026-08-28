@@ -68,7 +68,7 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Search graveyard..."
-            className="bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
+            className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
           />
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
                       <div className="flex justify-end gap-2 pt-2">
                         <button
                           onClick={() => handleRestore(item)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 text-sm font-label-md transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-on-primary hover:bg-emerald-500 text-sm font-label-md transition-colors"
                         >
                           Restore
                         </button>
@@ -132,14 +132,14 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
                         <div className="flex gap-1">
                           <button
                             onClick={() => setRestoringId(item.id)}
-                            className="text-outline hover:text-emerald-400 p-1.5 rounded-md hover:bg-white/5 transition-colors"
+                            className="text-outline hover:text-emerald-400 p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors"
                             title="Restore"
                           >
                             <span className="material-symbols-outlined text-[16px]">restore</span>
                           </button>
                           <button
                             onClick={() => handlePermanentDelete(item)}
-                            className="text-outline hover:text-red-400 p-1.5 rounded-md hover:bg-white/5 transition-colors"
+                            className="text-outline hover:text-red-400 p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors"
                             title="Delete permanently"
                           >
                             <span className="material-symbols-outlined text-[16px]">delete_forever</span>

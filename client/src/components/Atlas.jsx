@@ -182,11 +182,11 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Search locations..."
-            className="bg-black/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
+            className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
           />
           <button
             onClick={handleAdd}
-            className="px-4 py-2 rounded-lg bg-indigo-electric text-white hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
             Add Location
@@ -197,7 +197,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
       {/* Map + Side Panel */}
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Map */}
-        <div className="flex-1 relative overflow-hidden rounded-xl border border-outline-variant/30 bg-slate-900/40">
+        <div className="flex-1 relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container/40">
           {filteredLocations.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
@@ -256,21 +256,21 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                             onChange={(e) => startEdit(loc, 'label', e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && commit(loc)}
                             placeholder="Location name"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <input
                             value={draft[loc.id]?.locationType || ''}
                             onChange={(e) => startEdit(loc, 'locationType', e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && commit(loc)}
                             placeholder="Location type (e.g. City, Capital)"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <input
                             value={draft[loc.id]?.region || ''}
                             onChange={(e) => startEdit(loc, 'region', e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && commit(loc)}
                             placeholder="Region"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <textarea
                             value={draft[loc.id]?.description || ''}
@@ -278,7 +278,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                             onKeyDown={(e) => e.key === 'Enter' && commit(loc)}
                             placeholder="Description"
                             rows={3}
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                           />
                         </div>
                         <div className="flex justify-end gap-2 mt-3">
@@ -364,7 +364,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                   const target = getLocationNode(edge.target);
                   if (!source || !target) return null;
                   return (
-                    <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-outline-variant/10">
+                    <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-surface-variant/10 border border-outline-variant/10">
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-[14px] text-indigo-electric">travel_explore</span>
                         <span className="text-xs text-on-surface">{source.data?.label || 'Unknown'}</span>
@@ -394,7 +394,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
 
         return (
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => { setSelectedLocation(null); setEditingLocationId(null); }}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" />
             <div className="relative w-full max-w-lg glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 {isEditing ? (
@@ -405,21 +405,21 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                       onChange={(e) => setEditDraft((prev) => ({ ...prev, [loc.id]: { ...(prev[loc.id] || data), label: e.target.value } }))}
                       onKeyDown={(e) => e.key === 'Enter' && commitLocationEdit(loc)}
                       placeholder="Location name"
-                      className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                      className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                     />
                     <input
                       value={currentDraft.locationType || ''}
                       onChange={(e) => setEditDraft((prev) => ({ ...prev, [loc.id]: { ...(prev[loc.id] || data), locationType: e.target.value } }))}
                       onKeyDown={(e) => e.key === 'Enter' && commitLocationEdit(loc)}
                       placeholder="Location type (e.g. City, Capital)"
-                      className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                      className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                     />
                     <input
                       value={currentDraft.region || ''}
                       onChange={(e) => setEditDraft((prev) => ({ ...prev, [loc.id]: { ...(prev[loc.id] || data), region: e.target.value } }))}
                       onKeyDown={(e) => e.key === 'Enter' && commitLocationEdit(loc)}
                       placeholder="Region"
-                      className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                      className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                     />
                     <textarea
                       value={currentDraft.description || ''}
@@ -427,10 +427,10 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                       onKeyDown={(e) => e.key === 'Enter' && commitLocationEdit(loc)}
                       placeholder="Description"
                       rows={3}
-                      className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                      className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                     />
                     <div className="flex justify-end gap-2 pt-2">
-                      <button onClick={() => commitLocationEdit(loc)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 text-sm font-label-md transition-colors">Save</button>
+                      <button onClick={() => commitLocationEdit(loc)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-on-primary hover:bg-emerald-500 text-sm font-label-md transition-colors">Save</button>
                       <button onClick={() => { setEditingLocationId(null); setEditDraft((prev) => { const next = { ...prev }; delete next[loc.id]; return next; }); }} className="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 text-sm font-label-md transition-colors">Cancel</button>
                     </div>
                   </div>
@@ -454,7 +454,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                             setEditingLocationId(loc.id);
                             setEditDraft((prev) => ({ ...prev, [loc.id]: { ...(loc.data || {}) } }));
                           }}
-                          className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors"
+                          className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[18px]">edit</span>
                         </button>
@@ -463,11 +463,11 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                             setSelectedLocation(null);
                             setDeleteConfirmId(loc.id);
                           }}
-                          className="text-on-surface-variant hover:text-red-400 p-1.5 rounded-md hover:bg-white/5 transition-colors"
+                          className="text-on-surface-variant hover:text-red-400 p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
-                        <button onClick={() => setSelectedLocation(null)} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors">
+                        <button onClick={() => setSelectedLocation(null)} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors">
                           <span className="material-symbols-outlined text-[18px]">close</span>
                         </button>
                       </div>
@@ -487,9 +487,9 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                             const other = getLocationNode(otherId);
                             if (!other) return null;
                             return (
-                              <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-outline-variant/10">
+                              <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-surface-variant/10 border border-outline-variant/10">
                                 <span className="font-body-md text-[14px] text-on-surface">{other.data?.label || 'Unknown'}</span>
-                                <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-black/20 rounded-md">{edge.label || 'Connected'}</span>
+                                <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-surface-container/20 rounded-md">{edge.label || 'Connected'}</span>
                               </div>
                             );
                           })}
@@ -509,7 +509,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
         const loc = locations.find((l) => l.id === deleteConfirmId);
         return (
           <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+            <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" onClick={cancelDelete} />
             <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
               <div className="p-6">
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
@@ -517,7 +517,7 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
                   Delete "{loc?.data?.label || 'this location'}"? This cannot be undone.
                 </p>
               </div>
-              <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
                 <button
                   onClick={cancelDelete}
                   className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"

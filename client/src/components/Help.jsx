@@ -77,7 +77,7 @@ export default function Help() {
           <div key={section.title} className="glass-panel rounded-xl border border-outline-variant/30 overflow-hidden">
             <button
               onClick={() => toggle(section.title)}
-              className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 p-4 text-left hover:bg-surface-variant/10 transition-colors"
             >
               <span className="material-symbols-outlined text-indigo-electric">{section.icon}</span>
               <span className="font-label-md text-label-md text-on-surface flex-1">{section.title}</span>
@@ -88,7 +88,7 @@ export default function Help() {
             {open[section.title] && (
               <div className="px-4 pb-4 space-y-3">
                 {section.items.map((item) => (
-                  <div key={item.title} className="p-3 rounded-lg bg-black/20 border border-outline-variant/20">
+                  <div key={item.title} className="p-3 rounded-lg bg-surface-container/20 border border-outline-variant/20">
                     <h4 className="font-label-md text-label-md text-on-surface mb-1">{item.title}</h4>
                     <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">{item.body}</p>
                   </div>

@@ -37,7 +37,7 @@ function CustomNode({ data, selected }) {
 
   return (
     <div
-      className={`node-card rounded-xl p-5 cursor-pointer w-[280px] backdrop-blur-md bg-slate-900/80 border ${
+      className={`node-card rounded-xl p-5 cursor-pointer w-[280px] backdrop-blur-md bg-surface-container/80 border ${
         selected ? 'active border-indigo-500/60 shadow-[0_0_20px_rgba(79,70,229,0.25)]' : 'border-outline-variant/40 hover:border-outline-variant/70 hover:shadow-lg'
       }`}
     >
@@ -45,7 +45,7 @@ function CustomNode({ data, selected }) {
         {editing === 'type' ? (
           <select
             autoFocus
-            className="px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-black/40 text-on-surface outline-none"
+            className="px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none"
             value={draft}
             onChange={(e) => {
               const next = e.target.value;
@@ -72,7 +72,7 @@ function CustomNode({ data, selected }) {
         {editing === 'label' ? (
           <input
             autoFocus
-            className="bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none w-[140px]"
+            className="bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none w-[140px]"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => commit((v) => safeData.onChange?.('label', v))}

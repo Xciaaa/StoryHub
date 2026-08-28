@@ -203,9 +203,10 @@ async function getPublicProject(id) {
   }
 
   const result = await query(
-    `SELECT id, title, description, canvas_data, cover_image, updated_at
-     FROM projects
-     WHERE id = $1 AND is_public = true`,
+    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username
+     FROM projects p
+     LEFT JOIN users u ON p.user_id = u.id
+     WHERE p.id = $1 AND p.is_public = true`,
     [id]
   );
 
@@ -232,10 +233,11 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   }
 
   const result = await query(
-    `SELECT id, title, description, cover_image, updated_at
-     FROM projects
-     WHERE is_public = true
-     ORDER BY updated_at DESC
+    `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username
+     FROM projects p
+     LEFT JOIN users u ON p.user_id = u.id
+     WHERE p.is_public = true
+     ORDER BY p.updated_at DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset]
   );
@@ -244,6 +246,32 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   await setCached(cacheKey, projects);
 
   return { data: projects, fromCache: false };
+}
+
+async function forkProject({ projectId, userId }) {
+  const original = await query(
+    'SELECT id, title, description, canvas_data, cover_image, genre, user_id FROM projects WHERE id = $1',
+    [projectId]
+  ).then(r => r.rows[0]);
+
+  if (!original) return null;
+
+  const result = await query(
+    `INSERT INTO projects (user_id, title, description, canvas_data, cover_image, genre, parent_project_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, user_id, title, description, is_public, canvas_data, cover_image, genre, updated_at`,
+    [
+      userId,
+      `${original.title} (Fork)`,
+      original.description,
+      original.canvas_data || { nodes: [], edges: [] },
+      original.cover_image,
+      original.genre,
+      projectId,
+    ]
+  );
+
+  return result.rows[0];
 }
 
 module.exports = {
@@ -257,4 +285,5 @@ module.exports = {
   recordProjectActivity,
   getDashboardStats,
   getActivityHeatmap,
+  forkProject,
 };

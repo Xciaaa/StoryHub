@@ -58,7 +58,7 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md bg-zinc-950/80 border border-outline-variant px-3 py-2 text-sm text-on-background placeholder:text-on-surface-variant/60 focus:outline-none focus:border-violet-glow focus:ring-1 focus:ring-violet-glow transition-colors"
+            className="w-full rounded-md bg-background/80 border border-outline-variant px-3 py-2 text-sm text-on-background placeholder:text-on-surface-variant/60 focus:outline-none focus:border-violet-glow focus:ring-1 focus:ring-violet-glow transition-colors"
           />
         </div>
         <div>
@@ -68,7 +68,7 @@ export default function Login() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md bg-zinc-950/80 border border-outline-variant px-3 py-2 text-sm text-on-background placeholder:text-on-surface-variant/60 focus:outline-none focus:border-violet-glow focus:ring-1 focus:ring-violet-glow transition-colors"
+            className="w-full rounded-md bg-background/80 border border-outline-variant px-3 py-2 text-sm text-on-background placeholder:text-on-surface-variant/60 focus:outline-none focus:border-violet-glow focus:ring-1 focus:ring-violet-glow transition-colors"
           />
         </div>
 
@@ -77,7 +77,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-indigo-electric text-white py-2 text-sm font-medium hover:bg-indigo-electric/90 disabled:opacity-50 transition-colors"
+          className="w-full rounded-md bg-indigo-electric text-on-primary py-2 text-sm font-medium hover:bg-indigo-electric/90 disabled:opacity-50 transition-colors"
         >
           {loading ? 'Logging in…' : 'Log in'}
         </button>

@@ -184,7 +184,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
             </div>
             <button
               onClick={() => setIsAdding(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-electric text-white hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors flex items-center gap-2 shadow-lg shadow-indigo-electric/20"
+              className="px-4 py-2 rounded-lg bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors flex items-center gap-2 shadow-lg shadow-indigo-electric/20"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               New Entry
@@ -221,7 +221,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search the codex..."
-                className="w-full bg-black/20 border-0 border-b-2 border-outline-variant/40 text-on-surface font-body-md px-4 py-3 pl-12 rounded-t-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-on-surface-variant/50"
+                className="w-full bg-surface-container/20 border-0 border-b-2 border-outline-variant/40 text-on-surface font-body-md px-4 py-3 pl-12 rounded-t-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-on-surface-variant/50"
               />
             </div>
           </div>
@@ -333,10 +333,10 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                         </span>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); startEdit(entry, 'label', data.label); }} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors">
+                        <button onClick={(e) => { e.stopPropagation(); startEdit(entry, 'label', data.label); }} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors">
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(entry); }} className="text-on-surface-variant hover:text-red-400 p-1.5 rounded-md hover:bg-white/5 transition-colors">
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(entry); }} className="text-on-surface-variant hover:text-red-400 p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors">
                           <span className="material-symbols-outlined text-[16px]">delete</span>
                         </button>
                       </div>
@@ -350,7 +350,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                             onChange={(e) => startEdit(entry, 'label', e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
                             placeholder="Entry title"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <div className="space-y-2">
                             <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide">Image</label>
@@ -379,7 +379,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                             value={draft[entry.id]?.status || 'Draft'}
                             onChange={(e) => startEdit(entry, 'status', e.target.value)}
                             onBlur={() => commit(entry)}
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           >
                           {STATUSES.map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -391,7 +391,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                           onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
                           placeholder="Summary"
                           rows={2}
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                         />
                         <textarea
                           value={draft[entry.id]?.notes || ''}
@@ -399,7 +399,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                           onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
                           placeholder="Detailed notes..."
                           rows={4}
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                         />
                         {data.type === 'Faction' && (
                           <textarea
@@ -408,11 +408,11 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                             onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
                             placeholder="Key Figures (one per line)"
                             rows={3}
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                           />
                         )}
                         <div className="flex justify-end gap-2 pt-2">
-                          <button onClick={() => commit(entry)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 text-sm font-label-md transition-colors">Save</button>
+                          <button onClick={() => commit(entry)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-on-primary hover:bg-emerald-500 text-sm font-label-md transition-colors">Save</button>
                           <button onClick={() => { setEditingId(null); setDraft((prev) => { const next = { ...prev }; delete next[entry.id]; return next; }); }} className="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 text-sm font-label-md transition-colors">Cancel</button>
                         </div>
                       </div>
@@ -433,7 +433,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                               <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Figures</h4>
                               <div className="flex flex-wrap gap-2">
                                 {data.keyFigures.split('\n').filter(Boolean).map((figure, i) => (
-                                  <span key={i} className="px-2 py-1 rounded bg-white/5 border border-outline-variant/10 text-[13px] text-on-surface-variant">
+                                  <span key={i} className="px-2 py-1 rounded bg-surface-variant/10 border border-outline-variant/10 text-[13px] text-on-surface-variant">
                                     {figure}
                                   </span>
                                 ))}
@@ -471,7 +471,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
         const relatedEdges = getRelatedEdges(selectedEntry.id);
         return (
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setSelectedEntry(null)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" />
             <div className="relative w-full max-w-lg glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -486,7 +486,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                       </span>
                     </div>
                   </div>
-                  <button onClick={() => setSelectedEntry(null)} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-white/5 transition-colors">
+                  <button onClick={() => setSelectedEntry(null)} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors">
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
@@ -510,7 +510,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                     <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Figures</h4>
                     <div className="flex flex-wrap gap-2">
                       {data.keyFigures.split('\n').filter(Boolean).map((figure, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-lg bg-white/5 border border-outline-variant/10 text-[14px] text-on-surface">
+                        <span key={i} className="px-3 py-1.5 rounded-lg bg-surface-variant/10 border border-outline-variant/10 text-[14px] text-on-surface">
                           {figure}
                         </span>
                       ))}
@@ -527,13 +527,13 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                         if (!other) return null;
                         const direction = edge.source === selectedEntry.id ? 'Outgoing' : 'Incoming';
                         return (
-                          <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-outline-variant/10">
+                          <div key={edge.id} className="flex items-center justify-between p-2 rounded-lg bg-surface-variant/10 border border-outline-variant/10">
                             <div className="flex items-center gap-2">
                               <span className={`material-symbols-outlined text-[16px] ${getCategoryColor(other.data?.type)}`}>{getCategoryIcon(other.data?.type)}</span>
                               <span className="font-body-md text-[14px] text-on-surface">{other.data?.label || 'Unknown'}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-black/20 rounded-md">{edge.label || 'Connected'}</span>
+                              <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-surface-container/20 rounded-md">{edge.label || 'Connected'}</span>
                               <span className="font-label-sm text-[10px] text-outline uppercase tracking-wider">{direction}</span>
                             </div>
                           </div>
@@ -553,7 +553,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
         const entry = entries.find((e) => e.id === deleteConfirmId);
         return (
           <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+            <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" onClick={cancelDelete} />
             <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
               <div className="p-6">
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
@@ -561,7 +561,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                   Delete "{entry?.data?.label || 'this entry'}"? This cannot be undone.
                 </p>
               </div>
-              <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
                 <button
                   onClick={cancelDelete}
                   className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"

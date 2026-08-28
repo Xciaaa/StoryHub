@@ -3,12 +3,17 @@ import { useParams, Link } from 'react-router-dom';
 import ReactFlow, { Background, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function PublicProject() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [forking, setForking] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +36,37 @@ export default function PublicProject() {
       cancelled = true;
     };
   }, [id]);
+
+  const handleFork = async () => {
+    if (!user) return;
+    setForking(true);
+    try {
+      const forked = await api.forkProject(id);
+      alert('Project forked to your account!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setForking(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) return;
+    try {
+      const result = await api.toggleLike(id);
+      setLiked(result.liked);
+      setLikeCount(result.count);
+    } catch (err) {
+      console.error('Like failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (project && user) {
+      api.getLikeStatus(id).then((status) => setLiked(status.liked));
+      api.getLikeCount(id).then((data) => setLikeCount(data.count));
+    }
+  }, [project, id, user]);
 
   if (loading) {
     return (
@@ -62,9 +98,34 @@ export default function PublicProject() {
             <p className="font-body-sm text-body-sm text-on-surface-variant">{project.description}</p>
           )}
         </div>
-        <Link to="/community" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
-          ← Community
-        </Link>
+        <div className="flex items-center gap-3">
+          {user && (
+            <>
+              <button
+                onClick={handleLike}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-red-400 hover:border-red-400/30 transition-colors"
+              >
+                <span
+                  className="material-symbols-outlined text-[18px]"
+                  style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                  favorite
+                </span>
+                <span className="font-label-md text-label-md">{likeCount}</span>
+              </button>
+              <button
+                onClick={handleFork}
+                disabled={forking}
+                className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md hover:bg-primary-container/90 transition-colors disabled:opacity-50"
+              >
+                {forking ? 'Forking…' : 'Fork Project'}
+              </button>
+            </>
+          )}
+          <Link to="/community" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
+            ← Community
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1">

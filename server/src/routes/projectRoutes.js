@@ -11,6 +11,7 @@ router.get('/', projectController.listProjects);
 router.get('/:id', projectController.getProject);
 router.put('/:id', projectController.updateProject);
 router.delete('/:id', projectController.deleteProject);
+router.post('/:id/fork', projectController.forkProject);
 router.get('/stats/dashboard', projectController.getDashboardStats);
 router.get('/stats/activity', projectController.getActivityHeatmap);
 

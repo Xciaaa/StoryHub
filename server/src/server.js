@@ -17,6 +17,8 @@ const { requireAuth } = require('./middleware/auth');
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const likeRoutes = require('./routes/likeRoutes');
 const oauthRoutes = require('./routes/oauthRoutes');
 const upload = require('./middleware/upload');
 const uploadController = require('./controllers/uploadController');
@@ -69,7 +71,9 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', oauthRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/projects', likeRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use('/uploads', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');

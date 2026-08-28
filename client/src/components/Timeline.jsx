@@ -117,7 +117,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
             <p className="text-sm text-on-surface-variant mb-4">No plot events yet. Create your first timeline event below.</p>
             <button
               onClick={handleAdd}
-              className="px-4 py-2 rounded-lg bg-indigo-electric text-white hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors"
+              className="px-4 py-2 rounded-lg bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors"
             >
               Add First Event
             </button>
@@ -149,7 +149,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           
                           onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                           placeholder="Year / Date"
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                         />
                         <input
                           value={currentDraft.label || ''}
@@ -157,7 +157,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           
                           onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                           placeholder="Event title"
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                         />
                         <textarea
                           value={currentDraft.description || ''}
@@ -165,7 +165,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           
                           placeholder="Description"
                           rows={3}
-                          className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                         />
                       </div>
                     ) : (
@@ -202,7 +202,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             
                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                             placeholder="Year / Date"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <input
                             value={currentDraft.label || ''}
@@ -210,7 +210,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             
                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                             placeholder="Event title"
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                           />
                           <textarea
                             value={currentDraft.description || ''}
@@ -218,7 +218,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             
                             placeholder="Description"
                             rows={3}
-                            className="w-full bg-black/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                           />
                         </div>
                       ) : (
@@ -245,7 +245,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             value={currentDraft.status || 'Draft'}
                             onChange={(e) => startEdit(event, 'status', e.target.value)}
                             
-                            className="px-2 py-1 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-black/40 text-on-surface outline-none"
+                            className="px-2 py-1 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none"
                           >
                             {STATUSES.map((s) => (
                               <option key={s} value={s}>{s}</option>
@@ -339,7 +339,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
         const event = events.find((e) => e.id === deleteConfirmId);
         return (
           <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelDelete} />
+            <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" onClick={cancelDelete} />
             <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
               <div className="p-6">
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Confirm Delete</h3>
@@ -347,7 +347,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                   Delete "{event?.data?.label || 'this event'}"? This cannot be undone.
                 </p>
               </div>
-              <div className="px-6 py-4 bg-black/20 flex justify-end gap-3">
+              <div className="px-6 py-4 bg-surface-container/20 flex justify-end gap-3">
                 <button
                   onClick={cancelDelete}
                   className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"

@@ -26,4 +26,36 @@ async function createUser({ username, email, passwordHash }) {
   return result.rows[0];
 }
 
-module.exports = { findUserByEmail, findUserByUsername, createUser };
+async function searchUsers(q) {
+  const result = await query(
+    `SELECT id, username, email, avatar, bio, created_at FROM users WHERE username ILIKE $1 ORDER BY username ASC LIMIT 20`,
+    [`%${q}%`]
+  );
+  return result.rows;
+}
+
+async function getUserById(id) {
+  const result = await query(
+    `SELECT id, username, email, avatar, bio, created_at FROM users WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+async function updateUser(id, { username, email, avatar, bio, emailNotifications, pushNotifications }) {
+  const result = await query(
+    `UPDATE users
+     SET username = COALESCE($2, username),
+         email = COALESCE($3, email),
+         avatar = COALESCE($4, avatar),
+         bio = COALESCE($5, bio),
+         email_notifications = COALESCE($6, email_notifications),
+         push_notifications = COALESCE($7, push_notifications)
+     WHERE id = $1
+     RETURNING id, username, email, avatar, bio, email_notifications, push_notifications, created_at`,
+    [id, username ?? null, email ?? null, avatar ?? null, bio ?? null, emailNotifications ?? null, pushNotifications ?? null]
+  );
+  return result.rows[0] || null;
+}
+
+module.exports = { findUserByEmail, findUserByUsername, createUser, searchUsers, getUserById, updateUser };
