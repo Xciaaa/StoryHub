@@ -239,6 +239,14 @@
     background-color: rgba(144, 143, 160, 0.5);
   }
 
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .overlay-heavy {
     background-color: var(--color-overlay-heavy);
   }
@@ -396,6 +404,16 @@
 }
 
 @layer utilities {
+  .px-margin-desktop {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .px-margin-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
   .text-balance {
     text-wrap: balance;
   }

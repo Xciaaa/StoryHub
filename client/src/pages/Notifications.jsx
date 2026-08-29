@@ -158,11 +158,11 @@ export default function Notifications() {
   return (
     <div className="min-h-screen bg-background text-on-background font-body-md text-body-md overflow-x-hidden">
       {/* Top Navigation */}
-      <header className="fixed top-0 left-0 w-full z-50 glass-strong border-b border-outline-variant/30 shadow-none h-16">
+      <header className="fixed top-0 left-0 w-full z-50 glass-strong border-b border-outline-variant/30 h-16">
         <div className="flex justify-between items-center px-margin-desktop h-full w-full">
           <div className="flex items-center gap-8">
-            <Link to="/dashboard" className="font-display-lg text-display-lg tracking-tighter text-primary">
-              Lore Canvas
+            <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+              LoreCanvas
             </Link>
             <nav className="hidden md:flex gap-6">
               <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-300">

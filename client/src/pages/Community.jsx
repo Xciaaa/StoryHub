@@ -267,10 +267,10 @@ export default function Community() {
   return (
       <div className="min-h-screen bg-background text-on-surface overflow-x-hidden">
       {/* Top Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-surface-container/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-margin-desktop h-16">
+      <nav className="fixed top-0 left-0 w-full z-50 glass-strong border-b border-outline-variant/30 flex justify-between items-center px-margin-desktop h-16">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="font-display-lg text-[24px] md:text-[32px] bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">
-            Lore Canvas
+          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+            LoreCanvas
           </Link>
         </div>
 

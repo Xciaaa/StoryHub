@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const loadProjects = async () => {
     setLoading(true);
@@ -138,11 +139,17 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-on-background overflow-x-hidden">
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30 transition-all duration-300">
-        <div className="flex items-center gap-8">
-          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight" style={{ fontSize: '28px' }}>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+          >
+            <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+          <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
           </Link>
-          <div className="hidden md:flex gap-6">
+          <div className="hidden md:flex gap-6 ml-6">
             <span className="text-indigo-electric font-bold border-b-2 border-indigo-electric pb-1 font-label-md text-label-md">
               Dashboard
             </span>
@@ -157,8 +164,11 @@ export default function Dashboard() {
               Community
             </Link>
           </div>
+          <Link to="/dashboard" className="md:hidden">
+            <Logo className="w-8 h-8" />
+          </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {searchOpen && (
             <SearchInput
               value={searchQuery}
@@ -166,27 +176,49 @@ export default function Dashboard() {
               onClear={() => setSearchQuery('')}
               placeholder="Search universes..."
               type="universes"
-              className="w-48 md:w-64"
+              className="w-40 md:w-64"
             />
           )}
           <button 
             onClick={() => setSearchOpen(!searchOpen)} 
-            className="text-on-surface-variant hover:text-primary transition-colors duration-200"
+            className="text-on-surface-variant hover:text-primary transition-colors duration-200 p-2"
           >
             <span className="material-symbols-outlined">search</span>
           </button>
           <NotificationBell />
-          <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+          <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200 hidden md:block p-2">
             <span className="material-symbols-outlined">settings</span>
           </Link>
-          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30 ml-2">
+          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline/30">
             <Avatar src={user?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>
 
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <span className="text-indigo-electric font-bold border-b-2 border-indigo-electric pb-1 font-label-md text-label-md">
+              Dashboard
+            </span>
+            {projects.length > 0 ? (
+              <Link to={`/editor/${projects[0].id}`} className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>
+                Canvas
+              </Link>
+            ) : (
+              <span className="text-on-surface-variant/50 font-label-md text-label-md cursor-not-allowed py-2">Canvas</span>
+            )}
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>
+              Community
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="md:ml-24 pt-24 pb-12 px-margin-mobile md:px-margin-desktop min-h-screen">
+      <main className="pt-24 pb-12 px-margin-mobile md:px-margin-desktop min-h-screen">
         {/* Hero Section */}
         <section className="mb-12">
           <Link to={`/profile/${user?.username}`} className="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface mb-6 hover:text-primary transition-colors">

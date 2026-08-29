@@ -147,7 +147,7 @@ export default function PublicProject() {
   return (
     <div className="h-screen w-screen bg-background text-on-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="glass-strong px-6 py-3 flex items-center justify-between shrink-0 z-20 border-b border-outline-variant/20">
+      <header className="glass-strong px-4 md:px-8 h-16 flex items-center justify-between shrink-0 z-50 border-b border-outline-variant/30">
         <div className="flex items-center gap-4 min-w-0">
           <Link to="/community" className="shrink-0 p-2 rounded-lg hover:bg-surface-variant/30 transition-colors">
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>

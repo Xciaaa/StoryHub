@@ -18,6 +18,7 @@ import Timeline from '../components/Timeline';
 import Atlas from '../components/Atlas';
 import Avatar from '../components/Avatar';
 import Codex from '../components/Codex';
+import FeedbackModal from '../components/FeedbackModal';
 import Graveyard from '../components/Graveyard';
 import Help from '../components/Help';
 import InspectorSidebar from '../components/InspectorSidebar';
@@ -185,6 +186,10 @@ export default function Editor() {
   const [newNodeType, setNewNodeType] = useState('Character');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileFilter, setMobileFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const isFirstLoad = useRef(true);
   const savingRef = useRef(false);
@@ -694,14 +699,20 @@ export default function Editor() {
   }[saveStatus];
 
   return (
-    <div className="h-screen w-screen bg-background text-on-background font-body-md text-body-md overflow-hidden grid grid-rows-[auto_1fr]">
+    <div className="h-screen w-screen bg-background text-on-background font-body-md text-body-md grid grid-rows-[auto_1fr]">
       {/* Top Navigation */}
       <nav className="flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
-        <div className="flex items-center gap-8">
-          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+          >
+            <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+          <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
           </Link>
-          <div className="hidden md:flex gap-6">
+          <div className="hidden md:flex gap-6 ml-6">
             <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md">
               Dashboard
             </Link>
@@ -712,21 +723,37 @@ export default function Editor() {
               Community
             </Link>
           </div>
+          <Link to="/dashboard" className="md:hidden">
+            <Logo className="w-8 h-8" />
+          </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <NotificationBell />
-          <Link to="/settings" className="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200 rounded-full hover:bg-surface-variant/40">
+          <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200 hidden md:block p-2">
             <span className="material-symbols-outlined">settings</span>
           </Link>
-          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 ml-2">
+          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
             <Avatar src={user?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </nav>
 
-      <div className={`grid h-full transition-all duration-300 ${sidebarCollapsed ? 'grid-cols-[64px_1fr]' : 'grid-cols-[320px_1fr]'}`}>
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            <span className="text-indigo-electric font-bold border-b-2 border-indigo-electric pb-1 opacity-90 font-label-md text-label-md py-2">Canvas</span>
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Community</Link>
+            <Link to="/settings" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2 md:hidden" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+          </div>
+        </div>
+      )}
+
+      <div className={`hidden md:grid h-full transition-all duration-300 ${sidebarCollapsed ? 'grid-cols-[64px_1fr]' : 'grid-cols-[320px_1fr]'}`}>
         {/* Side Navigation */}
-        <aside className={`flex flex-col glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full transition-all duration-300 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+        <aside className={`hidden md:flex flex-col glass-strong border border-outline-variant/30 shadow-lg rounded-xl h-full transition-all duration-300 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
         <div className="flex items-center justify-between mb-4">
           {!sidebarCollapsed && (
             <div className="flex items-center gap-4 p-2">
@@ -879,7 +906,7 @@ export default function Editor() {
             {!sidebarCollapsed && 'Graveyard'}
           </button>
         </nav>
-        <div className="mt-auto border-t border-outline-variant/30 pt-4 flex flex-col gap-1.5">
+        <div className="mt-auto border-t border-outline-variant/30 pt-4 pb-16 flex flex-col gap-1.5">
           <button
             onClick={() => setActiveTab('help')}
             className={`flex items-center gap-3 p-2.5 rounded-lg font-label-md text-label-md text-left ${
@@ -895,7 +922,7 @@ export default function Editor() {
             <span className="material-symbols-outlined text-[20px]">settings</span>
             {!sidebarCollapsed && 'Settings'}
           </Link>
-          <button className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
+          <button onClick={() => setFeedbackOpen(true)} className="flex items-center gap-3 p-2.5 rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition-all font-label-md text-label-md text-left">
             <span className="material-symbols-outlined text-[20px]">rate_review</span>
             {!sidebarCollapsed && 'Feedback'}
           </button>
@@ -903,7 +930,7 @@ export default function Editor() {
       </aside>
 
       {/* Main Canvas */}
-      <main className="flex-1 relative overflow-hidden h-full min-h-0 pb-16">
+      <main className="flex-1 relative overflow-hidden h-full min-h-0 pb-16 hidden md:block">
         {activeTab === 'nodes' ? (
           <div className="absolute inset-0 h-full w-full">
             <ReactFlow
@@ -1005,10 +1032,105 @@ export default function Editor() {
               />
             )}
             {activeTab === 'help' && <Help />}
+           </div>
+         )}
+       </main>
+       </div>
+
+       {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-surface-container-low/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-2xl md:hidden">
+        <button onClick={() => setActiveTab('nodes')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'nodes' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined mb-1 text-[24px]">hub</span>
+          <span className="font-label-sm text-label-sm">Nodes</span>
+        </button>
+        <button onClick={() => setActiveTab('timeline')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'timeline' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined mb-1 text-[24px]">timeline</span>
+          <span className="font-label-sm text-label-sm">Timeline</span>
+        </button>
+        <button onClick={() => setActiveTab('atlas')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'atlas' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined mb-1 text-[24px]">map</span>
+          <span className="font-label-sm text-label-sm">Atlas</span>
+        </button>
+        <button onClick={() => setActiveTab('codex')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'codex' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined mb-1 text-[24px]">menu_book</span>
+          <span className="font-label-sm text-label-sm">Codex</span>
+        </button>
+        <button onClick={() => setActiveTab('help')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'help' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined mb-1 text-[24px]">more_horiz</span>
+          <span className="font-label-sm text-label-sm">More</span>
+        </button>
+      </nav>
+
+      {/* Floating Action Button (Mobile) */}
+      <button 
+        aria-label="New Node" 
+        onClick={() => addNode()} 
+        className="fixed right-6 bottom-24 z-40 md:hidden w-[64px] h-[64px] bg-primary-container/80 text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform backdrop-blur-sm"
+      >
+        <span className="material-symbols-outlined text-[24px]">add</span>
+      </button>
+
+      {/* Mobile Node List View */}
+      {activeTab === 'nodes' && (
+        <div className="md:hidden fixed inset-0 z-30 bg-background pt-20 pb-24 overflow-y-auto">
+          <div className="px-margin-mobile">
+            {/* Search */}
+            <div className="relative w-full mb-4">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">search</span>
+              <input 
+                className="w-full bg-surface-container-low border-b-2 border-transparent focus:border-primary-container text-on-surface font-body-md rounded-t-lg px-10 py-3 outline-none transition-colors placeholder:text-outline-variant"
+                placeholder="Search nodes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {/* Filter Chips */}
+            <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 mb-4">
+              {['All', 'Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setMobileFilter(filter)}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full font-label-sm text-label-sm transition-all ${
+                    mobileFilter === filter
+                      ? 'bg-primary-container/20 border border-primary-container text-primary'
+                      : 'bg-transparent border border-outline-variant/30 text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+            {/* Node Cards */}
+            <div className="flex flex-col gap-3">
+              {nodes.filter((n) => !n.data?.trashed).filter((n) => mobileFilter === 'All' || n.data?.type === mobileFilter).map((node) => (
+                <div
+                  key={node.id}
+                  onClick={() => {
+                    setSelectedNodeId(node.id);
+                    setInspectorOpen(true);
+                  }}
+                  className="node-card rounded-xl p-4 cursor-pointer"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant/20">
+                      <span className="material-symbols-outlined text-primary-container text-[24px]">
+                        {node.data?.type === 'Character' ? 'person' : node.data?.type === 'Location' ? 'location_on' : node.data?.type === 'Plot Event' ? 'event' : node.data?.type === 'Lore' ? 'menu_book' : node.data?.type === 'Item' ? 'shopping_bag' : node.data?.type === 'Faction' ? 'groups' : 'psychology'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-headline-md text-headline-md text-on-surface truncate">{node.data?.label || 'Untitled'}</h3>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">{node.data?.description || ''}</p>
+                      <div className="flex gap-2 mt-2">
+                        <span className="text-[10px] font-label-sm text-primary-container uppercase tracking-wider">{node.data?.type || 'Entity'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-      </main>
-      </div>
+        </div>
+       )}
 
       {/* Bottom Timeline */}
       <BottomTimeline nodes={nodes} edges={edges} onSelectNode={(id) => {
@@ -1169,6 +1291,8 @@ export default function Editor() {
           </div>
         </div>
       )}
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

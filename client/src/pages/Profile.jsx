@@ -163,9 +163,9 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background text-on-surface">
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 md:px-12 h-16 glass-strong border-b border-outline-variant/30">
+      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
         <div className="flex items-center gap-8">
-          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface text-[24px] tracking-tight">
+          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
           </Link>
           <div className="hidden md:flex gap-6 items-center">

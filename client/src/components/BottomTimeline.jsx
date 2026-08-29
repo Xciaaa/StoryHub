@@ -12,15 +12,11 @@ export default function BottomTimeline({ nodes, edges, onSelectNode, collapsed, 
   if (events.length === 0) return null;
 
   return (
-    <div
-      className={`fixed bottom-0 left-0 z-30 transition-all duration-300 ${
-        collapsed ? 'right-auto w-auto' : 'left-0 right-0'
-      }`}
-    >
+    <div className="fixed bottom-0 left-0 right-0 z-30 transition-all duration-300">
       {collapsed ? (
         <button
           onClick={onToggle}
-          className="h-12 px-3 bg-surface-container/90 backdrop-blur-md border border-outline-variant/30 rounded-t-xl flex items-center gap-2 hover:bg-surface-variant/60 transition-colors"
+          className="h-12 px-3 bg-surface-container/90 backdrop-blur-md border border-outline-variant/30 rounded-t-xl flex items-center gap-2 hover:bg-surface-variant/60 transition-colors ml-4"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
           <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Timeline</span>

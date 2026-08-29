@@ -150,7 +150,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background text-on-surface">
       {/* Top Navigation */}
-      <header className="hidden md:flex fixed top-0 left-0 w-full z-50 justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
         <div className="flex items-center gap-8">
           <span className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">LoreCanvas</span>
           <nav className="hidden md:flex gap-6">
