@@ -10,7 +10,9 @@ import ReactFlow, {
   useStore,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import dagre from 'dagre';
 import CustomNode from '../components/CustomNode';
+import StoryEdge from '../components/StoryEdge';
 import Timeline from '../components/Timeline';
 import Atlas from '../components/Atlas';
 import Avatar from '../components/Avatar';
@@ -24,11 +26,12 @@ import Logo from '../components/Logo';
 import NotificationBell from '../components/NotificationBell';
 
 const nodeTypes = { custom: CustomNode };
+const edgeTypes = { default: StoryEdge };
 
 const draftKey = (id) => `lorecanvas:draft:${id}`;
 const AUTOSAVE_DELAY_MS = 1500;
 
-function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character' }) {
+function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character', edgeFilter, setEdgeFilter, applyAutoLayout }) {
   const { zoomTo } = useReactFlow();
   const zoom = useStore((state) => state.transform[2]);
   const roundedZoom = Math.round(zoom * 100 / 10) * 10;
@@ -65,6 +68,32 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
         className="p-2 ml-1 bg-indigo-electric text-on-primary rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
       >
         <span className="material-symbols-outlined text-[20px]">add</span>
+      </button>
+      <div className="w-px h-5 bg-outline-variant/50 mx-1" />
+      <select
+        value={edgeFilter}
+        onChange={(e) => setEdgeFilter(e.target.value)}
+        className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-label-sm text-[11px] px-2 py-1.5 outline-none cursor-pointer"
+      >
+        <option value="all">All Edges</option>
+        <option value="wears">wears</option>
+        <option value="covets">covets</option>
+        <option value="commands">commands</option>
+        <option value="rules">rules</option>
+        <option value="leads">leads</option>
+        <option value="seeks">seeks</option>
+        <option value="plots">plots</option>
+        <option value="sabotages">sabotages</option>
+        <option value="carries">carries</option>
+        <option value="proclaims">proclaims</option>
+        <option value="answers">answers</option>
+      </select>
+      <button
+        onClick={applyAutoLayout}
+        className="px-2 py-1.5 bg-surface-variant/40 text-on-surface-variant hover:text-on-surface rounded-lg font-label-sm text-[11px] transition-colors border border-outline-variant/30"
+        title="Auto-layout nodes"
+      >
+        <span className="material-symbols-outlined text-[16px]">account_tree</span>
       </button>
       <div className="w-px h-5 bg-outline-variant/50 mx-1" />
       <button
@@ -192,6 +221,9 @@ export default function Editor() {
     return () => { cancelled = true; };
   }, [id]);
 
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const [edgeFilter, setEdgeFilter] = useState('all');
+
   const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
   const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
   const onConnect = useCallback((connection) => {
@@ -200,7 +232,17 @@ export default function Editor() {
     const sourceType = sourceNode?.data?.type || 'Entity';
     const targetType = targetNode?.data?.type || 'Entity';
     const defaultLabel = `${sourceType} → ${targetType}`;
-    setEdges((eds) => addEdge({ ...connection, label: defaultLabel, labelStyle: { fill: '#908fa0', fontSize: 11 }, labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' }, labelBgPadding: [4, 2], labelBgBorderRadius: 4 }, eds));
+    setEdges((eds) => addEdge({
+      ...connection,
+      type: 'default',
+      label: defaultLabel,
+      data: { label: defaultLabel },
+      style: { stroke: '#6366f1', strokeWidth: 2 },
+      labelStyle: { fill: '#908fa0', fontSize: 11 },
+      labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
+      labelBgPadding: [4, 2],
+      labelBgBorderRadius: 4,
+    }, eds));
   }, [nodes]);
 
   const sanitizeEdges = useCallback((eds, nodeIds) => {
@@ -228,6 +270,73 @@ export default function Editor() {
     setInspectorOpen(true);
     setSelectedNodeId(null);
   }, []);
+
+  const onNodeMouseEnter = useCallback((_, node) => {
+    setHoveredNodeId(node.id);
+  }, []);
+
+  const onNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null);
+  }, []);
+
+  const connectedEdgeIds = useMemo(() => {
+    if (!hoveredNodeId) return null;
+    const ids = new Set();
+    edges.forEach((e) => {
+      if (e.source === hoveredNodeId || e.target === hoveredNodeId) ids.add(e.id);
+    });
+    return ids;
+  }, [hoveredNodeId, edges]);
+
+  const visibleEdges = useMemo(() => {
+    const base = edges.filter((e) => {
+      const sourceNode = nodes.find((n) => n.id === e.source);
+      const targetNode = nodes.find((n) => n.id === e.target);
+      return sourceNode && targetNode && !sourceNode.data?.trashed && !targetNode.data?.trashed;
+    });
+    if (edgeFilter !== 'all') {
+      return base.filter((e) => {
+        const label = (e.data?.label || e.label || '').toLowerCase();
+        return label.includes(edgeFilter);
+      });
+    }
+    return base;
+  }, [edges, nodes, edgeFilter]);
+
+  const displayedEdges = useMemo(() => {
+    const normalized = visibleEdges.map((e) => ({ ...e, type: 'default' }));
+    if (!connectedEdgeIds) return normalized;
+    return normalized.map((e) => ({
+      ...e,
+      style: {
+        ...e.style,
+        opacity: connectedEdgeIds.has(e.id) ? 1 : 0.1,
+        strokeWidth: connectedEdgeIds.has(e.id) ? 2 : 1,
+      },
+    }));
+  }, [visibleEdges, connectedEdgeIds]);
+
+  const applyAutoLayout = useCallback(() => {
+    const g = new dagre.graphlib.Graph();
+    g.setDefaultEdgeLabel(() => ({}));
+    g.setGraph({ rankdir: 'LR', nodesep: 120, ranksep: 180 });
+    nodes.filter((n) => !n.data?.trashed).forEach((n) => {
+      g.setNode(n.id, { width: 280, height: 220 });
+    });
+    edges.forEach((e) => {
+      g.setEdge(e.source, e.target);
+    });
+    dagre.layout(g);
+    const next = nodes.map((n) => {
+      const nodeWithPosition = g.node(n.id);
+      if (!nodeWithPosition) return n;
+      return {
+        ...n,
+        position: { x: nodeWithPosition.x - 140, y: nodeWithPosition.y - 110 },
+      };
+    });
+    setNodes(next);
+  }, [nodes, edges]);
 
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
@@ -754,21 +863,20 @@ export default function Editor() {
           <div className="absolute inset-0 h-full w-full">
             <ReactFlow
               nodes={nodes.filter((n) => !n.data?.trashed)}
-              edges={edges.filter((e) => {
-                const sourceNode = nodes.find((n) => n.id === e.source);
-                const targetNode = nodes.find((n) => n.id === e.target);
-                return sourceNode && targetNode && !sourceNode.data?.trashed && !targetNode.data?.trashed;
-              })}
+              edges={displayedEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeClick={onNodeClick}
               onEdgeClick={onEdgeClick}
+              onNodeMouseEnter={onNodeMouseEnter}
+              onNodeMouseLeave={onNodeMouseLeave}
               fitView={{ padding: 0.2 }}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               defaultEdgeOptions={{
-                style: { stroke: '#6366f1', strokeWidth: 2 },
                 type: 'default',
+                style: { stroke: '#6366f1', strokeWidth: 2 },
                 labelStyle: { fill: '#908fa0', fontSize: 11 },
                 labelBgStyle: { fill: 'rgba(12, 19, 36, 0.8)' },
                 labelBgPadding: [4, 2],
@@ -779,7 +887,7 @@ export default function Editor() {
               <Background gap={32} size={1} color="rgba(144, 143, 160, 0.25)" />
               <Controls className="hidden" />
               {activeTab === 'nodes' && (
-                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} />
+                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} edgeFilter={edgeFilter} setEdgeFilter={setEdgeFilter} applyAutoLayout={applyAutoLayout} />
               )}
             </ReactFlow>
           </div>
@@ -997,6 +1105,22 @@ export default function Editor() {
                 }}
                 className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
               />
+            </div>
+
+            <div className="group">
+              <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Line Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={selectedEdge.data?.customColor || '#6366f1'}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setEdges((eds) => eds.map((edge) => edge.id === selectedEdge.id ? { ...edge, data: { ...(edge.data || {}), customColor: next } } : edge));
+                  }}
+                  className="w-10 h-10 rounded-lg border border-outline-variant/30 bg-transparent cursor-pointer"
+                />
+                <span className="font-body-md text-sm text-on-surface-variant">{selectedEdge.data?.customColor || 'Auto (by relationship)'}</span>
+              </div>
             </div>
 
             <div className="border-t border-outline-variant/20 pt-8">
