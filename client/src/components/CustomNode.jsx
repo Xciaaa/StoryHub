@@ -46,7 +46,7 @@ function CustomNode({ data, selected }) {
         {editing === 'type' && !readOnly ? (
           <select
             autoFocus
-            className="px-2.5 py-0.5 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none"
+            className="px-2.5 py-0.5 rounded-lg font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none cursor-pointer focus:border-primary-container transition-all"
             value={draft}
             onChange={(e) => {
               const next = e.target.value;
@@ -115,6 +115,27 @@ function CustomNode({ data, selected }) {
               const sentences = safeData.description.match(/[^.!?]+[.!?]+/g) || [safeData.description];
               return sentences.slice(0, 3).join(' ');
             })()}
+          </p>
+        </div>
+      )}
+      {(safeData.role || safeData.affiliation) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {safeData.role && (
+            <span className="px-2 py-0.5 rounded bg-violet-glow/10 border border-violet-glow/20 text-[11px] text-violet-glow font-label-sm">
+              {safeData.role}
+            </span>
+          )}
+          {safeData.affiliation && (
+            <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-400 font-label-sm">
+              {safeData.affiliation}
+            </span>
+          )}
+        </div>
+      )}
+      {safeData.type === 'Plot Event' && safeData.keyCharacters && (
+        <div className="mt-3 pt-2 border-t border-outline-variant/20">
+          <p className="font-body-md text-[12px] leading-relaxed text-on-surface-variant whitespace-pre-wrap">
+            {safeData.keyCharacters}
           </p>
         </div>
       )}

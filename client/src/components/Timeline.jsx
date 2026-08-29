@@ -244,8 +244,7 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           <select
                             value={currentDraft.status || 'Draft'}
                             onChange={(e) => startEdit(event, 'status', e.target.value)}
-                            
-                            className="px-2 py-1 rounded font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none"
+                            className="px-2 py-1 rounded-lg font-label-sm text-[10px] font-semibold uppercase tracking-widest border bg-surface-container/40 text-on-surface outline-none cursor-pointer focus:border-primary-container transition-all"
                           >
                             {STATUSES.map((s) => (
                               <option key={s} value={s}>{s}</option>

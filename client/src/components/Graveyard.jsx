@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import SearchInput from './SearchInput';
 
 const CATEGORIES = ['Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'];
 
@@ -64,11 +65,12 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
           <p className="font-label-sm text-label-sm text-on-surface-variant">Discarded ideas and deleted entries</p>
         </div>
         <div className="flex items-center gap-3">
-          <input
+          <SearchInput
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={setFilter}
             placeholder="Search graveyard..."
-            className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
+            type="graveyard"
+            className="w-64"
           />
         </div>
       </div>

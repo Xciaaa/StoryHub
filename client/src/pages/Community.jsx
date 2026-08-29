@@ -6,6 +6,7 @@ import Avatar from '../components/Avatar';
 import Logo from '../components/Logo';
 import NotificationBell from '../components/NotificationBell';
 import { useToast } from '../context/ToastContext';
+import SearchInput from '../components/SearchInput';
 
 const GENRES = ['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'];
 
@@ -80,17 +81,19 @@ export default function Community() {
   const [librarySort, setLibrarySort] = useState('recent');
   const [libraryViewMode, setLibraryViewMode] = useState('grid');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [showAllProjects, setShowAllProjects] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  async function loadData() {
+  async function loadData(loadAll = false) {
     setLoading(true);
     setError('');
     try {
+      const limit = loadAll ? 100 : 20;
       const [projectsData, architectsData] = await Promise.all([
-        api.listPublicProjects(1, 20).catch(() => []),
+        api.listPublicProjects(1, limit).catch(() => []),
         api.searchUsers('a').catch(() => []),
       ]);
       setProjects(projectsData);
@@ -188,11 +191,16 @@ export default function Community() {
     }
   };
 
+  const handleExploreAll = async () => {
+    setShowAllProjects(true);
+    await loadData(true);
+  };
+
   const filteredProjects = projects.filter((p) => {
     if (activeGenre !== 'All' && p.genre !== activeGenre) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
-      return p.title.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q);
+      return p.title.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.genre || '').toLowerCase().includes(q);
     }
     return true;
   });
@@ -257,7 +265,7 @@ export default function Community() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-surface overflow-x-hidden">
+      <div className="min-h-screen bg-background text-on-surface overflow-x-hidden">
       {/* Top Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-surface-container/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-margin-desktop h-16">
         <div className="flex items-center gap-4">
@@ -267,13 +275,13 @@ export default function Community() {
         </div>
 
         {/* Search */}
-        <div className="hidden md:flex items-center bg-surface-container-high rounded-full px-4 py-1.5 border border-outline-variant/30 focus-within:border-primary-container focus-within:shadow-[0_0_10px_rgba(79,70,229,0.3)] transition-all">
-          <span className="material-symbols-outlined text-on-surface-variant mr-2">search</span>
-          <input
+        <div className="hidden md:flex items-center justify-center">
+          <SearchInput
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent border-none text-on-surface focus:ring-0 text-sm w-64 placeholder:text-on-surface-variant/70"
+            onChange={setSearch}
             placeholder="Search universes..."
+            type="universes"
+            className="w-full max-w-md"
           />
         </div>
 
@@ -345,17 +353,6 @@ export default function Community() {
             <span className="material-symbols-outlined">auto_stories</span>
             Library
           </button>
-          <button
-            onClick={() => setActiveTab('deep-dive')}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-label-md text-left transition-all ${
-              activeTab === 'deep-dive'
-                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(79,70,229,0.3)]'
-                : 'text-on-surface-variant hover:bg-surface-variant/20 hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined">visibility</span>
-            Deep Dive
-          </button>
         </nav>
 
         <button className="mt-4 bg-primary-container text-on-primary-container font-label-md py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container/90 transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)]">
@@ -394,7 +391,7 @@ export default function Community() {
                 <>
                   <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
                     <h2 className="font-headline-md text-on-surface">Featured Universes</h2>
-                    <button className="font-label-sm text-primary hover:text-primary-container transition-colors flex items-center gap-1">
+                    <button onClick={handleExploreAll} className="font-label-sm text-primary hover:text-primary-container transition-colors flex items-center gap-1">
                       Explore All <span className="material-symbols-outlined text-sm">arrow_forward</span>
                     </button>
                   </div>
@@ -443,6 +440,12 @@ export default function Community() {
                                 <div className="w-full h-full bg-surface-container" />
                               )}
                               <div className="absolute top-3 right-3 z-20 bg-surface-container/80 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1 border border-outline-variant/50">
+                                {p.username === 'LoreArchitect' && p.title === 'The Shattered Crown' && (
+                                  <>
+                                    <span className="material-symbols-outlined text-xs text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+                                    <span className="font-label-sm text-on-surface">Reference</span>
+                                  </>
+                                )}
                                 {(p.trending_score > 10 || (p.like_count > 5 || p.fork_count > 3)) && (
                                   <>
                                     <span className="material-symbols-outlined text-xs text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
@@ -460,7 +463,7 @@ export default function Community() {
                                 <div className="flex items-center gap-2">
                                   <Link to={`/profile/${p.username || 'Architect'}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                     <div className="w-6 h-6 rounded-full overflow-hidden bg-surface-variant">
-                                      <img alt="" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew" />
+                                      <Avatar src={p.avatar} alt={p.username || 'Architect'} className="w-full h-full object-cover" />
                                     </div>
                                     <span className="font-label-sm text-on-surface-variant">@{p.username || 'Architect'}</span>
                                   </Link>
@@ -594,17 +597,17 @@ export default function Community() {
                       <p className="font-body-sm text-body-sm text-on-surface-variant">Community projects you've bookmarked.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <input
-                        type="text"
+                      <SearchInput
                         value={librarySearch}
-                        onChange={(e) => setLibrarySearch(e.target.value)}
+                        onChange={setLibrarySearch}
                         placeholder="Search saved projects..."
-                        className="w-full md:w-64 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                        type="universes"
+                        className="w-full md:w-64"
                       />
                       <select
                         value={libraryGenre}
                         onChange={(e) => setLibraryGenre(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container transition-all"
+                        className="px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all cursor-pointer"
                       >
                         {['All', 'Epic Fantasy', 'Cyberpunk', 'Sci-Fi', 'Grimdark'].map((g) => (
                           <option key={g} value={g}>{g}</option>
@@ -613,7 +616,7 @@ export default function Community() {
                       <select
                         value={librarySort}
                         onChange={(e) => setLibrarySort(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container transition-all"
+                        className="px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all cursor-pointer"
                       >
                         <option value="recent">Recently Saved</option>
                         <option value="title">Title</option>
@@ -776,7 +779,7 @@ export default function Community() {
                   {(() => {
                     const filtered = savedLibrary
                       .filter((p) => {
-                        const matchesSearch = (p.title || '').toLowerCase().includes(librarySearch.toLowerCase()) || (p.description || '').toLowerCase().includes(librarySearch.toLowerCase());
+                        const matchesSearch = (p.title || '').toLowerCase().includes(librarySearch.toLowerCase()) || (p.description || '').toLowerCase().includes(librarySearch.toLowerCase()) || (p.genre || '').toLowerCase().includes(librarySearch.toLowerCase());
                         const matchesGenre = libraryGenre === 'All' || p.genre === libraryGenre;
                         return matchesSearch && matchesGenre;
                       })
@@ -934,6 +937,8 @@ export default function Community() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
   );
 }
+
+

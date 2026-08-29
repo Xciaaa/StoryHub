@@ -60,7 +60,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
           id: `node_${Date.now()}`,
           type: 'custom',
           position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
-          data: { label: `New ${nodeType}`, type: nodeType, description: '' },
+          data: { label: `New ${nodeType}`, type: nodeType, description: '', role: '', affiliation: '' },
         })}
         className="p-2 ml-1 bg-indigo-electric text-on-primary rounded-full hover:bg-indigo-electric/90 transition-all shadow-[0_0_12px_rgba(79,70,229,0.5)] border border-indigo-400/30"
       >
@@ -357,7 +357,7 @@ export default function Editor() {
       id: `node_${Date.now()}`,
       type: 'custom',
       position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
-      data: { label: 'New entity', type: 'Character', description: '' },
+      data: { label: 'New entity', type: 'Character', description: '', role: '', affiliation: '' },
     };
     setNodes((nds) => attachNodeHandlers([...nds, newNode]));
   };
@@ -644,7 +644,7 @@ export default function Editor() {
             <select
               value={newNodeType}
               onChange={(e) => setNewNodeType(e.target.value)}
-              className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm"
+              className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-xl text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm cursor-pointer"
             >
               <option value="Character">Character</option>
               <option value="Location">Location</option>
@@ -659,7 +659,7 @@ export default function Editor() {
                 id: `node_${Date.now()}`,
                 type: 'custom',
                 position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
-                data: { label: `New ${newNodeType}`, type: newNodeType, description: '' },
+                data: { label: `New ${newNodeType}`, type: newNodeType, description: '', role: '', affiliation: '' },
               })}
               className="w-full py-2.5 bg-indigo-electric text-on-primary rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
             >
@@ -887,6 +887,19 @@ export default function Editor() {
                   className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
+              {(selectedNode.data.type === 'Plot Event') && (
+                <div className="group">
+                  <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Key Characters & Their Role to the Plot Event</label>
+                  <textarea
+                    value={selectedNode.data.keyCharacters || ''}
+                    onChange={(e) => updateNodeData(selectedNode.id, 'keyCharacters', e.target.value)}
+                    onBlur={(e) => updateNodeData(selectedNode.id, 'keyCharacters', e.target.value)}
+                    placeholder="e.g. Aldric - Proclaims the ordeal; Seraphine - Secretly sabotages it"
+                    rows={3}
+                    className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner resize-none"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Markdown Editor Area */}

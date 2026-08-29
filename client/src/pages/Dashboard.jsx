@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import Logo from '../components/Logo';
 import NotificationBell from '../components/NotificationBell';
+import SearchInput from '../components/SearchInput';
 
 function getNodeCount(canvasData) {
   if (!canvasData) return 0;
@@ -121,8 +122,13 @@ export default function Dashboard() {
 
   const totalNodes = projects.reduce((sum, p) => sum + (p.node_count ?? getNodeCount(p.canvas_data)), 0);
   const totalEdges = projects.reduce((sum, p) => sum + ((p.canvas_data?.edges || []).length), 0);
-  const visibleProjects = projects.slice(0, VISIBLE_CARDS);
-  const hasMore = projects.length > VISIBLE_CARDS;
+  const filteredProjects = projects.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (p.title || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.genre || '').toLowerCase().includes(q);
+  });
+  const visibleProjects = filteredProjects.slice(0, VISIBLE_CARDS);
+  const hasMore = filteredProjects.length > VISIBLE_CARDS;
 
   const heatmapData = activity.length > 0 ? activity : Array.from({ length: 28 }).map((_, i) => ({ date: new Date(Date.now() - i * 86400000).toISOString(), count: 0 }));
 
@@ -154,12 +160,13 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           {searchOpen && (
-            <input
-              type="text"
+            <SearchInput
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
               placeholder="Search universes..."
-              className="w-48 md:w-64 px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+              type="universes"
+              className="w-48 md:w-64"
             />
           )}
           <button 
@@ -215,18 +222,22 @@ export default function Dashboard() {
 
         {/* Immersive Story Cards */}
         <section className="mb-16">
-          <div className="flex justify-between items-end mb-6">
-            <h2 className="font-headline-md text-headline-md text-on-surface">Active Universes</h2>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
+              <h2 className="font-headline-md text-headline-md text-on-surface">Active Universes</h2>
               {hasMore && (
-                <button className="font-label-md text-label-md text-indigo-electric hover:text-primary transition-colors">
+                <button className="font-label-sm text-label-sm text-indigo-electric hover:text-primary transition-colors">
                   View All
                 </button>
               )}
-              <button onClick={openModal} className="font-label-md text-label-md text-indigo-electric hover:text-primary transition-colors flex items-center gap-1">
-                New Story <span className="material-symbols-outlined text-[18px]">add</span>
-              </button>
             </div>
+            <button 
+              onClick={openModal} 
+              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-indigo-electric text-on-primary font-label-md text-label-md hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] flex items-center justify-center gap-2 border border-indigo-500/50"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              New Story
+            </button>
           </div>
           {error && <p className="text-sm text-error mb-4">{error}</p>}
           {loading ? (

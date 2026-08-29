@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import SearchInput from './SearchInput';
 
 const LOCATION_TYPES = ['City', 'Wilderness', 'Dungeon', 'Village', 'Ruins', 'Realm'];
 
@@ -178,11 +179,12 @@ export default function Atlas({ project, nodes, edges, updateNodeData, addNode, 
           <p className="font-label-sm text-label-sm text-on-surface-variant">Spatial overview of mapped locations</p>
         </div>
         <div className="flex items-center gap-3">
-          <input
+          <SearchInput
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={setFilter}
             placeholder="Search locations..."
-            className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner w-64"
+            type="locations"
+            className="w-64"
           />
           <button
             onClick={handleAdd}

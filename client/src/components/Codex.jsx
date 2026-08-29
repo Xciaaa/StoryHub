@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { API_BASE } from '../lib/api';
+import SearchInput from './SearchInput';
 
 const CATEGORIES = ['Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'];
 const STATUSES = ['Draft', 'In Progress', 'Finalized'];
@@ -77,6 +78,8 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
         status: 'Draft',
         notes: '',
         keyFigures: type === 'Faction' ? '' : undefined,
+        role: '',
+        affiliation: '',
       },
     };
     addNode(newEntry);
@@ -216,12 +219,12 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
           {/* Search and Filter Tags */}
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative w-full md:flex-1">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-              <input
+              <SearchInput
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={setSearch}
                 placeholder="Search the codex..."
-                className="w-full bg-surface-container/20 border-0 border-b-2 border-outline-variant/40 text-on-surface font-body-md px-4 py-3 pl-12 rounded-t-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-on-surface-variant/50"
+                type="codex"
+                className="w-full"
               />
             </div>
           </div>
@@ -379,7 +382,7 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                             value={draft[entry.id]?.status || 'Draft'}
                             onChange={(e) => startEdit(entry, 'status', e.target.value)}
                             onBlur={() => commit(entry)}
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded-xl px-3 py-2 text-[14px] text-on-surface outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all cursor-pointer"
                           >
                           {STATUSES.map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -411,6 +414,16 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                           />
                         )}
+                        {data.type === 'Plot Event' && (
+                          <textarea
+                            value={draft[entry.id]?.keyCharacters || ''}
+                            onChange={(e) => startEdit(entry, 'keyCharacters', e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && commit(entry)}
+                            placeholder="Key Characters & Their Role to the Plot Event&#10;e.g. Aldric - Proclaims the ordeal"
+                            rows={3}
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                          />
+                        )}
                         <div className="flex justify-end gap-2 pt-2">
                           <button onClick={() => commit(entry)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-on-primary hover:bg-emerald-500 text-sm font-label-md transition-colors">Save</button>
                           <button onClick={() => { setEditingId(null); setDraft((prev) => { const next = { ...prev }; delete next[entry.id]; return next; }); }} className="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 text-sm font-label-md transition-colors">Cancel</button>
@@ -428,18 +441,40 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                           {data.notes && (
                             <p className="font-body-md text-body-md text-on-surface-variant/70 line-clamp-3 mb-4 whitespace-pre-wrap flex-grow">{data.notes}</p>
                           )}
-                          {data.type === 'Faction' && data.keyFigures && (
-                            <div className="mb-4">
-                              <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Figures</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {data.keyFigures.split('\n').filter(Boolean).map((figure, i) => (
-                                  <span key={i} className="px-2 py-1 rounded bg-surface-variant/10 border border-outline-variant/10 text-[13px] text-on-surface-variant">
-                                    {figure}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                           {data.type === 'Faction' && data.keyFigures && (
+                             <div className="mb-4">
+                               <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Figures</h4>
+                               <div className="flex flex-wrap gap-2">
+                                 {data.keyFigures.split('\n').filter(Boolean).map((figure, i) => (
+                                   <span key={i} className="px-2 py-1 rounded bg-surface-variant/10 border border-outline-variant/10 text-[13px] text-on-surface-variant">
+                                     {figure}
+                                   </span>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+                           {(data.role || data.affiliation) && (
+                             <div className="flex flex-wrap gap-2 mb-4">
+                               {data.role && (
+                                 <span className="px-2 py-0.5 rounded bg-violet-glow/10 border border-violet-glow/20 text-[11px] text-violet-glow font-label-sm">
+                                   {data.role}
+                                 </span>
+                               )}
+                               {data.affiliation && (
+                                 <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-400 font-label-sm">
+                                   {data.affiliation}
+                                 </span>
+                               )}
+                             </div>
+                           )}
+                           {data.type === 'Plot Event' && data.keyCharacters && (
+                             <div className="mb-4">
+                               <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Characters & Their Role</h4>
+                               <p className="font-body-md text-[13px] leading-relaxed text-on-surface-variant whitespace-pre-wrap">
+                                 {data.keyCharacters}
+                               </p>
+                             </div>
+                           )}
                           <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10 mt-auto">
                           <span className={`px-2 py-0.5 rounded font-label-sm text-[10px] uppercase tracking-wider border ${getStatusColor(data.status)}`}>
                             {data.status || 'Draft'}
@@ -514,6 +549,29 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                           {figure}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                )}
+                {data.type === 'Plot Event' && data.keyCharacters && (
+                  <div className="border-t border-outline-variant/20 pt-4 mb-4">
+                    <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Key Characters & Their Role</h4>
+                    <p className="font-body-md text-body-md text-on-surface leading-relaxed whitespace-pre-wrap">{data.keyCharacters}</p>
+                  </div>
+                )}
+                {(data.role || data.affiliation) && (
+                  <div className="border-t border-outline-variant/20 pt-4 mb-4">
+                    <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Role & Affiliation</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {data.role && (
+                        <span className="px-3 py-1.5 rounded-lg bg-violet-glow/10 border border-violet-glow/20 text-[14px] text-violet-glow font-label-sm">
+                          {data.role}
+                        </span>
+                      )}
+                      {data.affiliation && (
+                        <span className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[14px] text-blue-400 font-label-sm">
+                          {data.affiliation}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
