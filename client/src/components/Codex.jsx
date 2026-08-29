@@ -404,6 +404,61 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                           rows={4}
                           className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                         />
+                        {data.type === 'Character' && (
+                          <>
+                            <input value={draft[entry.id]?.role || ''} onChange={(e) => startEdit(entry, 'role', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Role / Title" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.age || ''} onChange={(e) => startEdit(entry, 'age', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Age" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.affiliation || ''} onChange={(e) => startEdit(entry, 'affiliation', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Affiliation" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <textarea value={draft[entry.id]?.keyItems || ''} onChange={(e) => startEdit(entry, 'keyItems', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Key Items (one per line)" rows={2} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none" />
+                          </>
+                        )}
+                        {data.type === 'Faction' && (
+                          <>
+                            <input value={draft[entry.id]?.leader || ''} onChange={(e) => startEdit(entry, 'leader', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Leader" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.size || ''} onChange={(e) => startEdit(entry, 'size', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Size" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.influence || ''} onChange={(e) => startEdit(entry, 'influence', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Influence" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <textarea value={draft[entry.id]?.keyFigures || ''} onChange={(e) => startEdit(entry, 'keyFigures', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Key Figures (one per line)" rows={3} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none" />
+                          </>
+                        )}
+                        {data.type === 'Location' && (
+                          <>
+                            <input value={draft[entry.id]?.title || ''} onChange={(e) => startEdit(entry, 'title', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Title (e.g. Biggest city)" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.ruler || ''} onChange={(e) => startEdit(entry, 'ruler', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Ruler" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <select value={draft[entry.id]?.status || 'Active'} onChange={(e) => startEdit(entry, 'status', e.target.value)} onBlur={() => commit(entry)} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded-xl px-3 py-2 text-[14px] text-on-surface outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all cursor-pointer">
+                              {['Active', 'Disbanded', 'Hidden', 'Weakened'].map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </select>
+                          </>
+                        )}
+                        {data.type === 'Plot Event' && (
+                          <>
+                            <input value={draft[entry.id]?.title || ''} onChange={(e) => startEdit(entry, 'title', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Title" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.timing || ''} onChange={(e) => startEdit(entry, 'timing', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Timing" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.spark || ''} onChange={(e) => startEdit(entry, 'spark', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Spark / Cause" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <textarea value={draft[entry.id]?.keyCharacters || ''} onChange={(e) => startEdit(entry, 'keyCharacters', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Key Characters (one per line)" rows={3} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none" />
+                          </>
+                        )}
+                        {data.type === 'Item' && (
+                          <>
+                            <input value={draft[entry.id]?.itemType || ''} onChange={(e) => startEdit(entry, 'itemType', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Item Type" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.rarity || ''} onChange={(e) => startEdit(entry, 'rarity', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Rarity" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.owner || ''} onChange={(e) => startEdit(entry, 'owner', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Owner" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <textarea value={draft[entry.id]?.abilities || ''} onChange={(e) => startEdit(entry, 'abilities', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Abilities" rows={2} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none" />
+                          </>
+                        )}
+                        {data.type === 'Lore' && (
+                          <>
+                            <input value={draft[entry.id]?.category || ''} onChange={(e) => startEdit(entry, 'category', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Category" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <select value={draft[entry.id]?.status || 'Known'} onChange={(e) => startEdit(entry, 'status', e.target.value)} onBlur={() => commit(entry)} className="w-full bg-surface-container/40 border border-outline-variant/50 rounded-xl px-3 py-2 text-[14px] text-on-surface outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all cursor-pointer">
+                              {['Known', 'Lost', 'Secret', 'Legendary'].map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </select>
+                          </>
+                        )}
+                        {data.type === 'Theme' && (
+                          <>
+                            <input value={draft[entry.id]?.theme || ''} onChange={(e) => startEdit(entry, 'theme', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Theme" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                            <input value={draft[entry.id]?.opposingForce || ''} onChange={(e) => startEdit(entry, 'opposingForce', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commit(entry)} placeholder="Opposing Force" className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none" />
+                          </>
+                        )}
                         {data.type === 'Faction' && (
                           <textarea
                             value={draft[entry.id]?.keyFigures || ''}
@@ -433,11 +488,32 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                         <>
                           <h3 className="font-headline-md text-headline-md text-on-surface mb-2 group-hover:text-primary transition-colors">{data.label || 'Untitled'}</h3>
                            {data.image && (
-                             <img src={`${API_BASE}${data.image}`} alt={data.label || 'Entry'} className="mb-4 h-32 w-full object-cover rounded-lg border border-outline-variant/20" />
+                              <img src={`${API_BASE}${data.image}`} alt={data.label || 'Entry'} className="mb-4 h-32 w-full object-cover rounded-lg border border-outline-variant/20" />
+                            )}
+                           {data.type === 'Character' && data.role && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.role}{data.age ? `, ${data.age}` : ''}{data.affiliation ? ` — ${data.affiliation}` : ''}</p>
                            )}
-                          {data.description && (
-                            <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-4 flex-grow">{data.description}</p>
-                          )}
+                           {data.type === 'Faction' && data.leader && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">Led by {data.leader}{data.size ? ` • ${data.size} members` : ''}</p>
+                           )}
+                           {data.type === 'Location' && data.title && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.title}{data.ruler ? ` • Ruled by ${data.ruler}` : ''}</p>
+                           )}
+                           {data.type === 'Plot Event' && data.timing && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.timing}</p>
+                           )}
+                           {data.type === 'Item' && data.itemType && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.itemType}{data.rarity ? ` • ${data.rarity}` : ''}</p>
+                           )}
+                           {data.type === 'Lore' && data.category && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.category}</p>
+                           )}
+                           {data.type === 'Theme' && data.theme && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 italic">{data.theme}</p>
+                           )}
+                           {data.description && (
+                             <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-4 flex-grow">{data.description}</p>
+                           )}
                           {data.notes && (
                             <p className="font-body-md text-body-md text-on-surface-variant/70 line-clamp-3 mb-4 whitespace-pre-wrap flex-grow">{data.notes}</p>
                           )}
@@ -575,6 +651,71 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
                     </div>
                   </div>
                 )}
+                {(data.type === 'Character' && (data.role || data.age || data.status || data.affiliation || data.keyItems)) ||
+                 (data.type === 'Faction' && (data.leader || data.size || data.influence || data.status)) ||
+                 (data.type === 'Location' && (data.title || data.ruler || data.status)) ||
+                 (data.type === 'Plot Event' && (data.title || data.timing || data.spark || data.keyCharacters)) ||
+                 (data.type === 'Item' && (data.itemType || data.rarity || data.owner || data.abilities)) ||
+                 (data.type === 'Lore' && (data.category || data.status)) ||
+                 (data.type === 'Theme' && (data.theme || data.opposingForce)) ? (
+                  <div className="border-t border-outline-variant/20 pt-4 mb-4">
+                    <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-3">Attributes</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {data.type === 'Character' && (
+                        <>
+                          {data.role && <div><span className="font-label-sm text-[11px] text-outline uppercase">Role</span><p className="font-body-sm text-body-sm text-on-surface">{data.role}</p></div>}
+                          {data.age && <div><span className="font-label-sm text-[11px] text-outline uppercase">Age</span><p className="font-body-sm text-body-sm text-on-surface">{data.age}</p></div>}
+                          {data.affiliation && <div><span className="font-label-sm text-[11px] text-outline uppercase">Affiliation</span><p className="font-body-sm text-body-sm text-on-surface">{data.affiliation}</p></div>}
+                          {data.status && <div><span className="font-label-sm text-[11px] text-outline uppercase">Status</span><p className="font-body-sm text-body-sm text-on-surface">{data.status}</p></div>}
+                          {data.keyItems && <div className="col-span-2"><span className="font-label-sm text-[11px] text-outline uppercase">Key Items</span><p className="font-body-sm text-body-sm text-on-surface whitespace-pre-wrap">{data.keyItems}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Faction' && (
+                        <>
+                          {data.leader && <div><span className="font-label-sm text-[11px] text-outline uppercase">Leader</span><p className="font-body-sm text-body-sm text-on-surface">{data.leader}</p></div>}
+                          {data.size && <div><span className="font-label-sm text-[11px] text-outline uppercase">Size</span><p className="font-body-sm text-body-sm text-on-surface">{data.size}</p></div>}
+                          {data.influence && <div><span className="font-label-sm text-[11px] text-outline uppercase">Influence</span><p className="font-body-sm text-body-sm text-on-surface">{data.influence}</p></div>}
+                          {data.status && <div><span className="font-label-sm text-[11px] text-outline uppercase">Status</span><p className="font-body-sm text-body-sm text-on-surface">{data.status}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Location' && (
+                        <>
+                          {data.title && <div><span className="font-label-sm text-[11px] text-outline uppercase">Title</span><p className="font-body-sm text-body-sm text-on-surface">{data.title}</p></div>}
+                          {data.ruler && <div><span className="font-label-sm text-[11px] text-outline uppercase">Ruler</span><p className="font-body-sm text-body-sm text-on-surface">{data.ruler}</p></div>}
+                          {data.status && <div><span className="font-label-sm text-[11px] text-outline uppercase">Status</span><p className="font-body-sm text-body-sm text-on-surface">{data.status}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Plot Event' && (
+                        <>
+                          {data.title && <div><span className="font-label-sm text-[11px] text-outline uppercase">Title</span><p className="font-body-sm text-body-sm text-on-surface">{data.title}</p></div>}
+                          {data.timing && <div><span className="font-label-sm text-[11px] text-outline uppercase">Timing</span><p className="font-body-sm text-body-sm text-on-surface">{data.timing}</p></div>}
+                          {data.spark && <div><span className="font-label-sm text-[11px] text-outline uppercase">Spark</span><p className="font-body-sm text-body-sm text-on-surface">{data.spark}</p></div>}
+                          {data.keyCharacters && <div className="col-span-2"><span className="font-label-sm text-[11px] text-outline uppercase">Key Characters</span><p className="font-body-sm text-body-sm text-on-surface whitespace-pre-wrap">{data.keyCharacters}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Item' && (
+                        <>
+                          {data.itemType && <div><span className="font-label-sm text-[11px] text-outline uppercase">Type</span><p className="font-body-sm text-body-sm text-on-surface">{data.itemType}</p></div>}
+                          {data.rarity && <div><span className="font-label-sm text-[11px] text-outline uppercase">Rarity</span><p className="font-body-sm text-body-sm text-on-surface">{data.rarity}</p></div>}
+                          {data.owner && <div><span className="font-label-sm text-[11px] text-outline uppercase">Owner</span><p className="font-body-sm text-body-sm text-on-surface">{data.owner}</p></div>}
+                          {data.abilities && <div className="col-span-2"><span className="font-label-sm text-[11px] text-outline uppercase">Abilities</span><p className="font-body-sm text-body-sm text-on-surface whitespace-pre-wrap">{data.abilities}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Lore' && (
+                        <>
+                          {data.category && <div><span className="font-label-sm text-[11px] text-outline uppercase">Category</span><p className="font-body-sm text-body-sm text-on-surface">{data.category}</p></div>}
+                          {data.status && <div><span className="font-label-sm text-[11px] text-outline uppercase">Status</span><p className="font-body-sm text-body-sm text-on-surface">{data.status}</p></div>}
+                        </>
+                      )}
+                      {data.type === 'Theme' && (
+                        <>
+                          {data.theme && <div><span className="font-label-sm text-[11px] text-outline uppercase">Theme</span><p className="font-body-sm text-body-sm text-on-surface">{data.theme}</p></div>}
+                          {data.opposingForce && <div><span className="font-label-sm text-[11px] text-outline uppercase">Opposing Force</span><p className="font-body-sm text-body-sm text-on-surface">{data.opposingForce}</p></div>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
                 {relatedEdges.length > 0 && (
                   <div className="border-t border-outline-variant/20 pt-4">
                     <h4 className="font-label-md text-label-md text-outline uppercase tracking-wider mb-2">Relationships</h4>

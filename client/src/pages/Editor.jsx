@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactFlow, {
   Background,
   Controls,
+  MiniMap,
   addEdge,
   applyNodeChanges,
   applyEdgeChanges,
@@ -19,6 +20,9 @@ import Avatar from '../components/Avatar';
 import Codex from '../components/Codex';
 import Graveyard from '../components/Graveyard';
 import Help from '../components/Help';
+import InspectorSidebar from '../components/InspectorSidebar';
+import BottomTimeline from '../components/BottomTimeline';
+import { toPng } from 'html-to-image';
 import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
 import { useAuth } from '../context/AuthContext';
@@ -31,7 +35,7 @@ const edgeTypes = { default: StoryEdge };
 const draftKey = (id) => `lorecanvas:draft:${id}`;
 const AUTOSAVE_DELAY_MS = 1500;
 
-function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character', edgeFilter, setEdgeFilter, applyAutoLayout }) {
+function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character', edgeFilter, setEdgeFilter, applyAutoLayout, onExport, exportLoading }) {
   const { zoomTo } = useReactFlow();
   const zoom = useStore((state) => state.transform[2]);
   const roundedZoom = Math.round(zoom * 100 / 10) * 10;
@@ -49,7 +53,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
   const zoomPercent = `${roundedZoom}%`;
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
+    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
       <button onClick={handleZoomOut} className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
         <span className="material-symbols-outlined text-[20px]">zoom_out</span>
       </button>
@@ -94,6 +98,15 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
         title="Auto-layout nodes"
       >
         <span className="material-symbols-outlined text-[16px]">account_tree</span>
+      </button>
+      <div className="w-px h-5 bg-outline-variant/50 mx-1" />
+      <button
+        onClick={onExport}
+        disabled={exportLoading}
+        className="px-2 py-1.5 bg-surface-variant/40 text-on-surface-variant hover:text-on-surface rounded-lg font-label-sm text-[11px] transition-colors border border-outline-variant/30 disabled:opacity-50"
+        title="Export canvas as PNG"
+      >
+        {exportLoading ? 'Exporting…' : <span className="material-symbols-outlined text-[16px]">download</span>}
       </button>
       <div className="w-px h-5 bg-outline-variant/50 mx-1" />
       <button
@@ -159,6 +172,8 @@ export default function Editor() {
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle');
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorPinned, setInspectorPinned] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -169,9 +184,11 @@ export default function Editor() {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [newNodeType, setNewNodeType] = useState('Character');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [timelineCollapsed, setTimelineCollapsed] = useState(false);
 
   const isFirstLoad = useRef(true);
   const savingRef = useRef(false);
+  const reactFlowInstanceRef = useRef(null);
 
   useEffect(() => {
     if (!id) {
@@ -263,7 +280,10 @@ export default function Editor() {
     setSelectedNodeId(node.id);
     setInspectorOpen(true);
     setSelectedEdgeId(null);
-  }, []);
+    if (!inspectorPinned) {
+      setInspectorOpen(true);
+    }
+  }, [inspectorPinned]);
 
   const onEdgeClick = useCallback((_, edge) => {
     setSelectedEdgeId(edge.id);
@@ -539,6 +559,31 @@ export default function Editor() {
     }
   }, [id, nodes, edges, sessionExpired, handleSessionExpired, project?.cover_image]);
 
+  const exportToPng = useCallback(async () => {
+    const canvasEl = document.querySelector('.react-flow__renderer');
+    if (!canvasEl) return;
+    setExportLoading(true);
+    try {
+      const instance = reactFlowInstanceRef.current;
+      if (instance) {
+        instance.fitView({ padding: 0.2, duration: 0 });
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }
+      const dataUrl = await toPng(canvasEl, {
+        backgroundColor: '#0c1324',
+        pixelRatio: 2,
+      });
+      const link = document.createElement('a');
+      link.download = `${title || 'story-canvas'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Export failed', err);
+    } finally {
+      setExportLoading(false);
+    }
+  }, [title]);
+
   useDebouncedEffect(
     () => {
       if (isFirstLoad.current || loading || !id || savingRef.current || sessionExpired) return;
@@ -742,7 +787,7 @@ export default function Editor() {
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 transition-all shrink-0"
+            className="p-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 transition-all shrink-0"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <span className="material-symbols-outlined text-[20px]">{sidebarCollapsed ? 'chevron_right' : 'chevron_left'}</span>
@@ -858,7 +903,7 @@ export default function Editor() {
       </aside>
 
       {/* Main Canvas */}
-      <main className="flex-1 relative overflow-hidden h-full min-h-0">
+      <main className="flex-1 relative overflow-hidden h-full min-h-0 pb-16">
         {activeTab === 'nodes' ? (
           <div className="absolute inset-0 h-full w-full">
             <ReactFlow
@@ -872,6 +917,7 @@ export default function Editor() {
               onNodeMouseEnter={onNodeMouseEnter}
               onNodeMouseLeave={onNodeMouseLeave}
               fitView={{ padding: 0.2 }}
+              onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               defaultEdgeOptions={{
@@ -886,8 +932,28 @@ export default function Editor() {
             >
               <Background gap={32} size={1} color="rgba(144, 143, 160, 0.25)" />
               <Controls className="hidden" />
+              <MiniMap
+                className="floating-glass border border-outline-variant/30"
+                position="bottom-right"
+                nodeColor={(n) => {
+                  if (n.data?.trashed) return '#4b5563';
+                  const map = {
+                    Character: '#8b5cf6',
+                    Location: '#3b82f6',
+                    'Plot Event': '#10b981',
+                    Lore: '#14b8a6',
+                    Item: '#f59e0b',
+                    Faction: '#ef4444',
+                    Theme: '#6366f1',
+                  };
+                  return map[n.data?.type] || '#6366f1';
+                }}
+                maskColor="rgba(12, 19, 36, 0.7)"
+                pannable
+                zoomable
+              />
               {activeTab === 'nodes' && (
-                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} edgeFilter={edgeFilter} setEdgeFilter={setEdgeFilter} applyAutoLayout={applyAutoLayout} />
+                <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} edgeFilter={edgeFilter} setEdgeFilter={setEdgeFilter} applyAutoLayout={applyAutoLayout} onExport={exportToPng} exportLoading={exportLoading} />
               )}
             </ReactFlow>
           </div>
@@ -944,126 +1010,25 @@ export default function Editor() {
       </main>
       </div>
 
+      {/* Bottom Timeline */}
+      <BottomTimeline nodes={nodes} edges={edges} onSelectNode={(id) => {
+        setSelectedNodeId(id);
+        setInspectorOpen(true);
+        setSelectedEdgeId(null);
+      }} collapsed={timelineCollapsed} onToggle={() => setTimelineCollapsed((v) => !v)} />
+
       {/* Slide-out Inspector Panel */}
       {inspectorOpen && selectedNode && !selectedEdge && (
-        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
-          {/* Header */}
-          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-surface-container/40">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-2 py-0.5 rounded bg-violet-glow/20 text-violet-glow font-label-sm text-[10px] font-semibold uppercase tracking-widest border border-violet-glow/30">
-                  {selectedNode.data.type || 'Entity'}
-                </span>
-                <span className="px-2 py-0.5 rounded border border-outline-variant/50 text-on-surface-variant font-label-sm text-[10px] font-medium tracking-wide">
-                  Active
-                </span>
-              </div>
-              <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1 truncate">
-                {selectedNode.data.label || 'Untitled'}
-              </h2>
-              <p className="font-label-md text-[13px] text-outline font-medium">ID: {selectedNode.id}</p>
-            </div>
-            <button
-              onClick={() => setInspectorOpen(false)}
-               className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-md hover:bg-surface-variant/20 transition-colors"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
-            {/* Metadata Form */}
-            <div className="flex flex-col gap-6">
-              <div className="group">
-                <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Role</label>
-                <input
-                  type="text"
-                  value={selectedNode.data.role || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
-                  onBlur={(e) => updateNodeData(selectedNode.id, 'role', e.target.value)}
-                  className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
-                />
-              </div>
-              <div className="group">
-                <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Affiliation</label>
-                <input
-                  type="text"
-                  value={selectedNode.data.affiliation || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
-                  onBlur={(e) => updateNodeData(selectedNode.id, 'affiliation', e.target.value)}
-                  className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
-                />
-              </div>
-              {(selectedNode.data.type === 'Plot Event') && (
-                <div className="group">
-                  <label className="block font-label-sm text-[12px] font-semibold text-outline mb-2 uppercase tracking-wide group-focus-within:text-indigo-400 transition-colors">Key Characters & Their Role to the Plot Event</label>
-                  <textarea
-                    value={selectedNode.data.keyCharacters || ''}
-                    onChange={(e) => updateNodeData(selectedNode.id, 'keyCharacters', e.target.value)}
-                    onBlur={(e) => updateNodeData(selectedNode.id, 'keyCharacters', e.target.value)}
-                    placeholder="e.g. Aldric - Proclaims the ordeal; Seraphine - Secretly sabotages it"
-                    rows={3}
-                    className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-body-md p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner resize-none"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Markdown Editor Area */}
-            <div className="border-t border-outline-variant/20 pt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-headline-md text-[18px] font-semibold text-on-surface">Biography</h3>
-              </div>
-              <div
-                className="bg-surface-container/20 rounded-lg border border-outline-variant/30 p-5 min-h-[220px] shadow-inner font-body-md text-[15px] leading-relaxed text-on-surface focus-within:border-indigo-500/50 transition-colors"
-              >
-                <textarea
-                  value={selectedNode.data.description || ''}
-                  onChange={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
-                  onBlur={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
-                  placeholder="No description yet."
-                  className="w-full h-full bg-transparent resize-none outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Backlinks */}
-            <div className="border-t border-outline-variant/20 pt-8 pb-4">
-              <h3 className="font-headline-md text-[18px] font-semibold text-on-surface mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-outline">account_tree</span>
-                Connections ({edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id).length})
-              </h3>
-              <ul className="flex flex-col gap-2.5">
-                {edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id).length === 0 ? (
-                  <li className="text-sm text-on-surface-variant">No connections yet. Drag between node handles to connect entities.</li>
-                ) : (
-                  edges
-                    .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
-                    .map((edge) => {
-                      const otherId = edge.source === selectedNode.id ? edge.target : edge.source;
-                      const otherNode = nodes.find((n) => n.id === otherId);
-                      const direction = edge.source === selectedNode.id ? 'Outgoing' : 'Incoming';
-                      return (
-                        <li key={edge.id} className="flex items-center justify-between p-3 rounded-lg bg-surface-variant/10 hover:bg-surface-variant/20 cursor-pointer border border-outline-variant/10 hover:border-outline-variant/30 transition-all shadow-sm">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                              <span className="material-symbols-outlined text-blue-400 text-[18px]">location_on</span>
-                            </div>
-                            <span className="font-body-md text-[14px] font-medium text-on-surface">
-                              {otherNode?.data?.label || 'Untitled'}
-                            </span>
-                          </div>
-                          <span className="font-label-sm text-[11px] text-outline px-2 py-1 bg-surface-container/20 rounded-md">
-                            {direction} · {otherNode?.data?.type || 'Entity'}
-                          </span>
-                        </li>
-                      );
-                    })
-                )}
-              </ul>
-            </div>
-          </div>
+        <aside className="fixed right-6 top-20 bottom-6 w-[30%] min-w-[320px] max-w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
+          <InspectorSidebar
+            node={selectedNode}
+            edges={edges}
+            allNodes={nodes}
+            onClose={() => { setInspectorOpen(false); setInspectorPinned(false); }}
+            onUpdate={updateNodeData}
+            isPinned={inspectorPinned}
+            onTogglePin={() => setInspectorPinned((p) => !p)}
+          />
         </aside>
       )}
 

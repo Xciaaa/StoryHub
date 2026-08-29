@@ -22,8 +22,11 @@ const canvasData = {
       data: {
         type: 'Character',
         label: 'King Aldric',
-        role: 'Ruler of Eldermyr',
+        role: 'King of Eldermyr',
         affiliation: 'The Wardens',
+        age: 55,
+        status: 'Alive',
+        keyItems: 'The Shattered Crown',
         description: 'The aging ruler of Eldermyr. Haunted by the loss of the Sunstone, he seeks a successor before the kingdom fractures.'
       }
     },
@@ -36,6 +39,9 @@ const canvasData = {
         label: 'Queen Seraphine',
         role: 'Heir Apparent',
         affiliation: 'The Shade Court',
+        age: 28,
+        status: 'Alive',
+        keyItems: 'Shadow-weaving amulet',
         description: 'Aldric\'s estranged daughter and a master of forbidden lore. She wields shadow-weaving magic tied to the Crown\'s history.'
       }
     },
@@ -48,6 +54,9 @@ const canvasData = {
         label: 'Theron',
         role: 'Wanderer / Knight-Errant',
         affiliation: 'Merchant Guild',
+        age: 34,
+        status: 'Alive',
+        keyItems: 'Theron\'s Map',
         description: 'A disgraced knight turned wanderer. He bears the last known map to the Sunstone Vault and is hunted by the Crown.'
       }
     },
@@ -58,8 +67,9 @@ const canvasData = {
       data: {
         type: 'Location',
         label: 'Eldermyr',
-        role: 'Capital City',
-        affiliation: 'Kingdom of Eldermyr',
+        title: 'Capital City',
+        ruler: 'King Aldric',
+        status: 'Thriving',
         description: 'The capital city built into the cliffs of the Ember Coast. Its spires are lit by captured lightning from the upper atmosphere.'
       }
     },
@@ -70,8 +80,9 @@ const canvasData = {
       data: {
         type: 'Location',
         label: 'Sunstone Vault',
-        role: 'Sealed Temple',
-        affiliation: 'Ancient Order',
+        title: 'Sealed Temple',
+        ruler: 'Ancient Order',
+        status: 'Ancient',
         description: 'A sealed temple beneath the Frostfall Peaks. The Sunstone can stabilize the Crown\'s fading magic or unmake it entirely.'
       }
     },
@@ -82,8 +93,9 @@ const canvasData = {
       data: {
         type: 'Plot Event',
         label: 'Claim to the Throne',
-        role: 'Inciting Incident',
-        affiliation: '',
+        title: 'The Trial by Ordeal',
+        timing: 'Early in the crisis',
+        spark: 'The loss of the Sunstone and Aldric\'s failing health',
         keyCharacters: 'King Aldric - Proclaims the trial by ordeal\nTheron - Answers the call, revealing the map\nQueen Seraphine - Watches from the shadows, forming her own plan',
         description: 'Aldric announces a trial by ordeal. Whoever retrieves the Sunstone will be named heir. This sets the main quest in motion.'
       }
@@ -95,8 +107,9 @@ const canvasData = {
       data: {
         type: 'Plot Event',
         label: 'Betrayal at the Spire',
-        role: 'Midpoint Twist',
-        affiliation: 'The Shade Court',
+        title: 'Sabotage in the Heights',
+        timing: 'Midpoint of the expedition',
+        spark: 'Seraphine\'s secret alliance with the Shade Court',
         keyCharacters: 'Queen Seraphine - Secretly sabotages the expedition\nTheron - Discovers the betrayal but is too late\nKing Aldric - Unaware, believes the ordeal is sacred',
         description: 'Seraphine secretly sabotages the expedition, hoping to claim the Sunstone for herself and rewrite the kingdom\'s fate.'
       }
@@ -108,8 +121,9 @@ const canvasData = {
       data: {
         type: 'Plot Event',
         label: 'The Reckoning',
-        role: 'Climax',
-        affiliation: '',
+        title: 'Final Confrontation',
+        timing: 'Climactic finale',
+        spark: 'The Sunstone is found and its power is unleashed',
         keyCharacters: 'King Aldric - Confronts Seraphine in the Vault\nQueen Seraphine - Claims the Sunstone, revealing her true allegiance\nTheron - Makes the final choice: destroy the Crown or restore it',
         description: 'The Sunstone is found. Aldric, Seraphine, and Theron confront each other in the Vault. The Crown either breaks or endures.'
       }
@@ -121,8 +135,8 @@ const canvasData = {
       data: {
         type: 'Lore',
         label: 'The Shattered Crown',
-        role: 'MacGuffin / Artifact',
-        affiliation: 'The Wardens',
+        category: 'Artifact / History',
+        status: 'Legendary',
         description: 'An artifact forged from the first eclipse. It grants kingship but slowly drains the wearer\'s memory. Three shards are missing.'
       }
     },
@@ -133,8 +147,8 @@ const canvasData = {
       data: {
         type: 'Lore',
         label: 'The Sunstone',
-        role: 'Celestial Relic',
-        affiliation: 'Ancient Order',
+        category: 'Celestial Relic',
+        status: 'Lost',
         description: 'A celestial relic that can mend the Crown or shatter it. Legends say it chose the first king. Now it sleeps beneath the peaks.'
       }
     },
@@ -145,8 +159,10 @@ const canvasData = {
       data: {
         type: 'Item',
         label: 'Theron\'s Map',
-        role: 'Key Item',
-        affiliation: 'Merchant Guild',
+        itemType: 'Living Map',
+        rarity: 'Legendary',
+        owner: 'Theron',
+        abilities: 'Rewrites itself; points to the Sunstone Vault; reveals the bearer\'s hidden regrets',
         description: 'A living map that rewrites itself. It points toward the Vault but also reveals the bearer\'s hidden regrets.'
       }
     },
@@ -157,8 +173,10 @@ const canvasData = {
       data: {
         type: 'Faction',
         label: 'The Wardens',
-        role: 'Protectors of the Crown',
-        affiliation: 'Kingdom of Eldermyr',
+        leader: 'King Aldric (nominal)',
+        size: 'Ancient order',
+        influence: 'High — commands the kingdom\'s military',
+        status: 'Active',
         description: 'An ancient order sworn to protect the Crown. They believe the ordeal is sacred; any interference is heresy.'
       }
     },
@@ -169,8 +187,10 @@ const canvasData = {
       data: {
         type: 'Faction',
         label: 'The Shade Court',
-        role: 'Secret Society',
-        affiliation: 'Independent',
+        leader: 'Queen Seraphine (hidden)',
+        size: 'Secret society',
+        influence: 'Moderate — operates from shadows',
+        status: 'Hidden',
         description: 'A secret society of mages who want the Crown destroyed. Seraphine is their hidden champion.'
       }
     },
@@ -181,8 +201,10 @@ const canvasData = {
       data: {
         type: 'Faction',
         label: 'Merchant Guild',
-        role: 'Economic Power',
-        affiliation: 'Independent',
+        leader: 'Council of Twelve',
+        size: 'Nationwide',
+        influence: 'High — controls trade and wealth',
+        status: 'Active',
         description: 'They fund Theron\'s expedition in exchange for a share of the Sunstone\'s power. Loyalty is rented, not given.'
       }
     },
@@ -193,8 +215,8 @@ const canvasData = {
       data: {
         type: 'Theme',
         label: 'Power vs Sacrifice',
-        role: 'Central Theme',
-        affiliation: '',
+        theme: 'Power vs Sacrifice',
+        opposingForce: 'Preservation of power vs. Sacrifice for the greater good',
         description: 'Every character must choose between preserving their power and sacrificing it for the kingdom. The Crown tests this in every generation.'
       }
     }

@@ -159,6 +159,38 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                           placeholder="Event title"
                           className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
                         />
+                        <input
+                          value={currentDraft.title || ''}
+                          onChange={(e) => startEdit(event, 'title', e.target.value)}
+                          
+                          onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                          placeholder="Subtitle / Alternate title"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                        />
+                        <input
+                          value={currentDraft.timing || ''}
+                          onChange={(e) => startEdit(event, 'timing', e.target.value)}
+                          
+                          onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                          placeholder="Timing (e.g. Dawn of the Third Age)"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                        />
+                        <input
+                          value={currentDraft.spark || ''}
+                          onChange={(e) => startEdit(event, 'spark', e.target.value)}
+                          
+                          onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                          placeholder="Spark / Cause"
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                        />
+                        <textarea
+                          value={currentDraft.keyCharacters || ''}
+                          onChange={(e) => startEdit(event, 'keyCharacters', e.target.value)}
+                          
+                          placeholder="Key Characters (one per line)"
+                          rows={3}
+                          className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                        />
                         <textarea
                           value={currentDraft.description || ''}
                           onChange={(e) => startEdit(event, 'description', e.target.value)}
@@ -176,6 +208,31 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                         <h3 className="font-headline-md text-headline-md text-on-surface mb-2">
                           {data.label || 'Untitled Event'}
                         </h3>
+                        {data.title && data.title !== data.label && (
+                          <p className="font-body-md text-body-md text-on-surface-variant mb-2 italic">
+                            {data.title}
+                          </p>
+                        )}
+                        {data.timing && (
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                            <span className="font-semibold text-outline">Timing:</span> {data.timing}
+                          </p>
+                        )}
+                        {data.spark && (
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                            <span className="font-semibold text-outline">Spark:</span> {data.spark}
+                          </p>
+                        )}
+                        {data.keyCharacters && (
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mb-2 whitespace-pre-wrap">
+                            <span className="font-semibold text-outline">Key Characters:</span>
+                            {(() => {
+                              const lines = data.keyCharacters.split('\n').filter(Boolean);
+                              const preview = lines.slice(0, 2).join('\n');
+                              return lines.length > 2 ? preview + '…' : preview;
+                            })()}
+                          </p>
+                        )}
                         <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3">
                           {data.description || 'No description provided.'}
                         </p>
@@ -211,6 +268,38 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
                             placeholder="Event title"
                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          />
+                          <input
+                            value={currentDraft.title || ''}
+                            onChange={(e) => startEdit(event, 'title', e.target.value)}
+                            
+                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                            placeholder="Subtitle / Alternate title"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          />
+                          <input
+                            value={currentDraft.timing || ''}
+                            onChange={(e) => startEdit(event, 'timing', e.target.value)}
+                            
+                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                            placeholder="Timing (e.g. Dawn of the Third Age)"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          />
+                          <input
+                            value={currentDraft.spark || ''}
+                            onChange={(e) => startEdit(event, 'spark', e.target.value)}
+                            
+                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                            placeholder="Spark / Cause"
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                          />
+                          <textarea
+                            value={currentDraft.keyCharacters || ''}
+                            onChange={(e) => startEdit(event, 'keyCharacters', e.target.value)}
+                            
+                            placeholder="Key Characters (one per line)"
+                            rows={3}
+                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
                           />
                           <textarea
                             value={currentDraft.description || ''}
@@ -292,9 +381,36 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                       </div>
 
                       {!isEditing && (
-                        <p className={`font-body-md text-body-md ${isFinalized || isInProgress ? 'text-on-surface-variant' : 'text-on-surface-variant/70'} line-clamp-3`}>
-                          {data.description || 'No description provided.'}
-                        </p>
+                        <>
+                          {data.title && data.title !== data.label && (
+                            <p className="font-body-md text-body-md text-on-surface-variant mb-2 italic">
+                              {data.title}
+                            </p>
+                          )}
+                          {data.timing && (
+                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                              <span className="font-semibold text-outline">Timing:</span> {data.timing}
+                            </p>
+                          )}
+                          {data.spark && (
+                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                              <span className="font-semibold text-outline">Spark:</span> {data.spark}
+                            </p>
+                          )}
+                          {data.keyCharacters && (
+                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-2 whitespace-pre-wrap">
+                              <span className="font-semibold text-outline">Key Characters:</span>
+                              {(() => {
+                                const lines = data.keyCharacters.split('\n').filter(Boolean);
+                                const preview = lines.slice(0, 2).join('\n');
+                                return lines.length > 2 ? preview + '…' : preview;
+                              })()}
+                            </p>
+                          )}
+                          <p className={`font-body-md text-body-md ${isFinalized || isInProgress ? 'text-on-surface-variant' : 'text-on-surface-variant/70'} line-clamp-3`}>
+                            {data.description || 'No description provided.'}
+                          </p>
+                        </>
                       )}
                     </div>
 

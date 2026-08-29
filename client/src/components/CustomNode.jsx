@@ -118,11 +118,16 @@ function CustomNode({ data, selected }) {
           </p>
         </div>
       )}
-      {(safeData.role || safeData.affiliation) && (
+      {safeData.type === 'Character' && (safeData.role || safeData.age || safeData.affiliation) && (
         <div className="mt-3 flex flex-wrap gap-2">
           {safeData.role && (
             <span className="px-2 py-0.5 rounded bg-violet-glow/10 border border-violet-glow/20 text-[11px] text-violet-glow font-label-sm">
               {safeData.role}
+            </span>
+          )}
+          {safeData.age && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.age}
             </span>
           )}
           {safeData.affiliation && (
@@ -130,6 +135,86 @@ function CustomNode({ data, selected }) {
               {safeData.affiliation}
             </span>
           )}
+        </div>
+      )}
+      {safeData.type === 'Faction' && (safeData.leader || safeData.size) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {safeData.leader && (
+            <span className="px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-[11px] text-red-400 font-label-sm">
+              {safeData.leader}
+            </span>
+          )}
+          {safeData.size && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.size}
+            </span>
+          )}
+        </div>
+      )}
+      {safeData.type === 'Location' && (safeData.title || safeData.ruler || safeData.status) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {safeData.title && (
+            <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-400 font-label-sm">
+              {safeData.title}
+            </span>
+          )}
+          {safeData.ruler && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.ruler}
+            </span>
+          )}
+          {safeData.status && (
+            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 font-label-sm">
+              {safeData.status}
+            </span>
+          )}
+        </div>
+      )}
+      {safeData.type === 'Plot Event' && (safeData.title || safeData.timing || safeData.spark) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {safeData.title && (
+            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 font-label-sm">
+              {safeData.title}
+            </span>
+          )}
+          {safeData.timing && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.timing}
+            </span>
+          )}
+          {safeData.spark && (
+            <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-400 font-label-sm">
+              {safeData.spark}
+            </span>
+          )}
+        </div>
+      )}
+      {safeData.type === 'Item' && (safeData.itemType || safeData.rarity) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {safeData.itemType && (
+            <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-400 font-label-sm">
+              {safeData.itemType}
+            </span>
+          )}
+          {safeData.rarity && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.rarity}
+            </span>
+          )}
+        </div>
+      )}
+      {safeData.type === 'Lore' && safeData.category && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-400 font-label-sm">
+            {safeData.category}
+          </span>
+        </div>
+      )}
+      {safeData.type === 'Theme' && safeData.theme && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="px-2 py-0.5 rounded bg-indigo-electric/10 border border-indigo-electric/20 text-[11px] text-indigo-electric font-label-sm">
+            {safeData.theme}
+          </span>
         </div>
       )}
       {safeData.type === 'Plot Event' && safeData.keyCharacters && (
