@@ -490,6 +490,7 @@ export default function Settings() {
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Current Password</label>
                       <input
                         type="password"
+                        autoComplete="current-password"
                         value={passwordForm.currentPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
                         className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
@@ -500,6 +501,7 @@ export default function Settings() {
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">New Password</label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={passwordForm.newPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                         className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
@@ -510,6 +512,7 @@ export default function Settings() {
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Confirm New Password</label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                         className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
@@ -538,6 +541,7 @@ export default function Settings() {
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">New Password</label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={passwordForm.newPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                         className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
@@ -550,6 +554,7 @@ export default function Settings() {
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Confirm New Password</label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                         className="input-line w-full text-on-surface py-2 font-body-md text-body-md"

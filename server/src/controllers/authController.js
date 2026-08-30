@@ -83,9 +83,14 @@ const changePassword = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Password login is not enabled for this account. Use your OAuth provider to sign in.' });
   }
 
-  const valid = await bcrypt.compare(currentPassword, user.password_hash);
-  if (!valid) {
-    return res.status(401).json({ error: 'Current password is incorrect' });
+  try {
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+  } catch (err) {
+    console.error('bcrypt compare failed:', err);
+    return res.status(500).json({ error: 'Password verification failed' });
   }
 
   const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
