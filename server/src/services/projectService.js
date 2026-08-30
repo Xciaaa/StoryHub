@@ -2,12 +2,6 @@ const { query } = require('../config/db');
 const {
   redisClient,
   ensureConnected,
-  getCached,
-  setCached,
-  deleteCached,
-  deleteCachedMany,
-  getCachedMany,
-  setCachedMany,
 } = require('../config/redis');
 
 const PUBLIC_CACHE_TTL_SECONDS = 60;
@@ -350,11 +344,6 @@ async function refreshPublicProjectCacheInBackground(id, cacheKey, staleKey) {
     return null;
   }
 }
-
-const PUBLIC_LIST_CACHE_TTL_SECONDS = 30;
-const PUBLIC_LIST_CACHE_STALE_TTL_SECONDS = 300;
-const publicListCacheKey = (page, limit) => `cache:${CACHE_KEY_VERSION}:projects:${page}:${limit}`;
-const trendingListCacheKey = () => `cache:${CACHE_KEY_VERSION}:projects:trending`;
 
 async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   const offset = (page - 1) * limit;
