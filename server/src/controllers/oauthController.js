@@ -2,7 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const GithubStrategy = require('passport-github2').Strategy;
 const jwt = require('jsonwebtoken');
-const { findUserByEmail, createUser } = require('../services/userService');
+const { findUserByEmail, createUser, getUserById } = require('../services/userService');
 
 function issueToken(user) {
   return jwt.sign({ sub: user.id, username: user.username }, process.env.JWT_SECRET, {
@@ -20,7 +20,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await findUserByEmail(id);
+    const user = await getUserById(id);
     done(null, user);
   } catch (err) {
     done(err);

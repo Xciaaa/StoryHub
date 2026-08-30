@@ -86,6 +86,16 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, '../public/uploads')));
 app.post('/api/upload', requireAuth, upload.single('image'), uploadController.uploadImage);
 
+const clientDistPath = path.join(__dirname, '../../client/dist');
+const hasClientDist = require('fs').existsSync(clientDistPath);
+
+if (hasClientDist) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
