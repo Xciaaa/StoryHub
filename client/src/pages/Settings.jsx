@@ -65,7 +65,7 @@ export default function Settings() {
         emailNotifications: profile.email_notifications ?? true,
         pushNotifications: profile.push_notifications ?? true,
       });
-      setHasPassword(profile.has_password !== false);
+      setHasPassword(!!profile.has_password);
       const sorted = Array.isArray(projects) ? projects.slice().sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0)) : [];
       setRecentProject(sorted[0] || null);
     } catch (err) {
