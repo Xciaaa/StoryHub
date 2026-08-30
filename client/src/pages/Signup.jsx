@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/AuthLayout';
+import { API_BASE } from '../lib/api';
 
 export default function Signup() {
   const { signup } = useAuth();
@@ -116,7 +117,7 @@ export default function Signup() {
 
       <div className="grid grid-cols-2 gap-4 w-full">
         <a
-          href="/api/auth/google"
+          href={`${API_BASE}/api/auth/google`}
           className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-gray-700 bg-[#1f2937] hover:bg-[#374151] transition-colors font-label-md text-label-md text-gray-200 shadow-sm"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -128,7 +129,7 @@ export default function Signup() {
           Google
         </a>
         <a
-          href="/api/auth/github"
+          href={`${API_BASE}/api/auth/github`}
           className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-gray-700 bg-[#1f2937] hover:bg-[#374151] transition-colors font-label-md text-label-md text-gray-200 shadow-sm"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
