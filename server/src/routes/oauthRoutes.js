@@ -6,7 +6,11 @@ const router = express.Router();
 
 function getFrontendUrl() {
   const env = process.env.FRONTEND_URL || 'http://localhost:5173';
-  return env.split(',')[0].trim();
+  const first = env.split(',')[0].trim();
+  if (first.includes('vercel.app') || first.includes('localhost')) {
+    return first;
+  }
+  return first;
 }
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

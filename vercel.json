@@ -20,7 +20,7 @@
     },
     {
       "src": "/(.*)",
-      "destination": "/dist/index.html"
+      "destination": "dist/index.html"
     }
   ]
 }
