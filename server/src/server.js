@@ -5,9 +5,10 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
+const RedisStore = require('connect-redis').default || require('connect-redis');
 const path = require('path');
 
-const { connectRedis } = require('./config/redis');
+const { connectRedis, redisClient } = require('./config/redis');
 const { pool } = require('./config/db');
 const { runMigrations } = require('./config/runMigrations');
 const errorHandler = require('./middleware/errorHandler');
@@ -52,6 +53,7 @@ app.use(cors(corsOptions));
 
 app.use(
   session({
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.JWT_SECRET || 'storyhub-session-secret',
     resave: false,
     saveUninitialized: false,
