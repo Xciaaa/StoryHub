@@ -6,17 +6,31 @@ import AuthLayout from '../components/AuthLayout';
 function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, updateUser } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('token', token);
-      navigate('/dashboard', { replace: true });
+      fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to fetch profile');
+          return res.json();
+        })
+        .then((profile) => {
+          updateUser(profile);
+          navigate('/dashboard', { replace: true });
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          navigate('/login', { replace: true });
+        });
     } else {
       navigate('/login', { replace: true });
     }
-  }, [searchParams, navigate, login]);
+  }, [searchParams, navigate, updateUser]);
 
   return (
     <AuthLayout subtitle="Signing you in…">
