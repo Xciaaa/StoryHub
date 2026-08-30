@@ -213,6 +213,9 @@ export default function Dashboard() {
             <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>
               Community
             </Link>
+            <Link to="/settings" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>
+              Settings
+            </Link>
           </div>
         </div>
       )}

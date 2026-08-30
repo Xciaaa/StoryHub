@@ -151,7 +151,7 @@ function CustomNode({ data, selected }) {
           )}
         </div>
       )}
-      {safeData.type === 'Location' && (safeData.title || safeData.ruler || safeData.status) && (
+      {safeData.type === 'Location' && (safeData.title || safeData.ruler || safeData.status || safeData.climate || safeData.population) && (
         <div className="mt-3 flex flex-wrap gap-2">
           {safeData.title && (
             <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-400 font-label-sm">
@@ -166,6 +166,16 @@ function CustomNode({ data, selected }) {
           {safeData.status && (
             <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 font-label-sm">
               {safeData.status}
+            </span>
+          )}
+          {safeData.climate && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.climate}
+            </span>
+          )}
+          {safeData.population && (
+            <span className="px-2 py-0.5 rounded bg-surface-variant/10 border border-outline-variant/10 text-[11px] text-on-surface-variant font-label-sm">
+              {safeData.population}
             </span>
           )}
         </div>

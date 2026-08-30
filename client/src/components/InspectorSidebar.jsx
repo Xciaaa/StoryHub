@@ -99,6 +99,8 @@ export default function InspectorSidebar({ node, edges, allNodes, onClose, onUpd
                 <AttributeRow label="Title" value={data.title} onUpdate={(v) => onUpdate(node.id, 'title', v)} placeholder="Biggest city, etc." />
                 <AttributeRow label="Ruler / King" value={data.ruler} onUpdate={(v) => onUpdate(node.id, 'ruler', v)} />
                 <AttributeSelect label="Status" value={data.status || 'Ancient'} onUpdate={(v) => onUpdate(node.id, 'status', v)} options={['Ancient', 'Thriving', 'Ruined', 'Hidden', 'Contested']} />
+                <AttributeRow label="Climate" value={data.climate} onUpdate={(v) => onUpdate(node.id, 'climate', v)} placeholder="Temperate, Arid, etc." />
+                <AttributeRow label="Population" value={data.population} onUpdate={(v) => onUpdate(node.id, 'population', v)} placeholder="50,000" />
               </>
             )}
 
@@ -286,10 +288,10 @@ function AttributeSelect({ label, value, onUpdate, options }) {
         value={value}
         onChange={(e) => onUpdate(e.target.value)}
         onBlur={(e) => onUpdate(e.target.value)}
-        className="bg-transparent text-on-surface font-body-md text-[14px] outline-none cursor-pointer text-right"
+        className="bg-surface-container/40 text-on-surface font-body-md text-[14px] outline-none cursor-pointer text-right border border-outline-variant/30 rounded px-2 py-1 focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all"
       >
         {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-surface-container">{opt}</option>
+          <option key={opt} value={opt} className="bg-surface-container text-on-surface">{opt}</option>
         ))}
       </select>
     </div>

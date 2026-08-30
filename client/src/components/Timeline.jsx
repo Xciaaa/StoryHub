@@ -232,13 +232,10 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                               return lines.length > 2 ? preview + '…' : preview;
                             })()}
                           </p>
-                        )}
-                        <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3">
-                          {data.description || 'No description provided.'}
-                        </p>
-                      </>
-                    )}
-                  </div>
+                         )}
+                       </>
+                     )}
+                   </div>
 
                   {/* Center Dot */}
                   <div className={`absolute left-4 sm:left-1/2 w-4 h-4 rounded-full transform -translate-x-1/2 z-20 ${
@@ -247,80 +244,105 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                     'bg-surface-container-low border-2 border-outline-variant'
                   }`} />
 
-                  {/* Right Content / Mobile Content */}
-                  <div className={`w-full sm:w-1/2 ${isLeft ? 'pl-12 sm:pl-12' : 'pr-12 sm:pr-12 sm:pl-0 order-1'}`}>
-                    <div className={`sm:hidden mb-4 ${!isLeft ? 'order-1' : ''}`}>
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <input
-                            autoFocus
-                            value={currentDraft.year || ''}
-                            onChange={(e) => startEdit(event, 'year', e.target.value)}
-                            
-                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
-                            placeholder="Year / Date"
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                          />
-                          <input
-                            value={currentDraft.label || ''}
-                            onChange={(e) => startEdit(event, 'label', e.target.value)}
-                            
-                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
-                            placeholder="Event title"
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                          />
-                          <input
-                            value={currentDraft.title || ''}
-                            onChange={(e) => startEdit(event, 'title', e.target.value)}
-                            
-                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
-                            placeholder="Subtitle / Alternate title"
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                          />
-                          <input
-                            value={currentDraft.timing || ''}
-                            onChange={(e) => startEdit(event, 'timing', e.target.value)}
-                            
-                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
-                            placeholder="Timing (e.g. Dawn of the Third Age)"
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                          />
-                          <input
-                            value={currentDraft.spark || ''}
-                            onChange={(e) => startEdit(event, 'spark', e.target.value)}
-                            
-                            onKeyDown={(e) => e.key === 'Enter' && commit(event)}
-                            placeholder="Spark / Cause"
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
-                          />
-                          <textarea
-                            value={currentDraft.keyCharacters || ''}
-                            onChange={(e) => startEdit(event, 'keyCharacters', e.target.value)}
-                            
-                            placeholder="Key Characters (one per line)"
-                            rows={3}
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
-                          />
-                          <textarea
-                            value={currentDraft.description || ''}
-                            onChange={(e) => startEdit(event, 'description', e.target.value)}
-                            
-                            placeholder="Description"
-                            rows={3}
-                            className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="font-label-sm text-label-sm text-indigo-electric font-semibold mb-1 uppercase tracking-wider">
-                            {data.year || 'Undated'}
-                          </div>
-                          <h3 className="font-headline-md text-headline-md text-on-surface mb-2">
-                            {data.label || 'Untitled Event'}
-                          </h3>
-                        </>
-                      )}
-                    </div>
+                   {/* Right Content / Mobile Content */}
+                   <div className={`w-full sm:w-1/2 pl-12 sm:pl-12 ${isLeft ? '' : 'sm:pl-0 sm:pr-12 order-1'}`}>
+                     <div className={`sm:hidden mb-4 ${!isLeft ? 'order-1' : ''}`}>
+                       {isEditing ? (
+                         <div className="space-y-2">
+                           <input
+                             autoFocus
+                             value={currentDraft.year || ''}
+                             onChange={(e) => startEdit(event, 'year', e.target.value)}
+                             
+                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                             placeholder="Year / Date"
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                           />
+                           <input
+                             value={currentDraft.label || ''}
+                             onChange={(e) => startEdit(event, 'label', e.target.value)}
+                             
+                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                             placeholder="Event title"
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                           />
+                           <input
+                             value={currentDraft.title || ''}
+                             onChange={(e) => startEdit(event, 'title', e.target.value)}
+                             
+                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                             placeholder="Subtitle / Alternate title"
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                           />
+                           <input
+                             value={currentDraft.timing || ''}
+                             onChange={(e) => startEdit(event, 'timing', e.target.value)}
+                             
+                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                             placeholder="Timing (e.g. Dawn of the Third Age)"
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                           />
+                           <input
+                             value={currentDraft.spark || ''}
+                             onChange={(e) => startEdit(event, 'spark', e.target.value)}
+                             
+                             onKeyDown={(e) => e.key === 'Enter' && commit(event)}
+                             placeholder="Spark / Cause"
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none"
+                           />
+                           <textarea
+                             value={currentDraft.keyCharacters || ''}
+                             onChange={(e) => startEdit(event, 'keyCharacters', e.target.value)}
+                             
+                             placeholder="Key Characters (one per line)"
+                             rows={3}
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                           />
+                           <textarea
+                             value={currentDraft.description || ''}
+                             onChange={(e) => startEdit(event, 'description', e.target.value)}
+                             
+                             placeholder="Description"
+                             rows={3}
+                             className="w-full bg-surface-container/40 border border-outline-variant/50 rounded px-2 py-1 text-[14px] text-on-surface outline-none resize-none"
+                           />
+                         </div>
+                       ) : (
+                         <>
+                           <div className="font-label-sm text-label-sm text-indigo-electric font-semibold mb-1 uppercase tracking-wider">
+                             {data.year || 'Undated'}
+                           </div>
+                           <h3 className="font-headline-md text-headline-md text-on-surface mb-2">
+                             {data.label || 'Untitled Event'}
+                           </h3>
+                           {data.title && data.title !== data.label && (
+                             <p className="font-body-md text-body-md text-on-surface-variant mb-2 italic">
+                               {data.title}
+                             </p>
+                           )}
+                           {data.timing && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                               <span className="font-semibold text-outline">Timing:</span> {data.timing}
+                             </p>
+                           )}
+                           {data.spark && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+                               <span className="font-semibold text-outline">Spark:</span> {data.spark}
+                             </p>
+                           )}
+                           {data.keyCharacters && (
+                             <p className="font-body-sm text-body-sm text-on-surface-variant mb-2 whitespace-pre-wrap">
+                               <span className="font-semibold text-outline">Key Characters:</span>
+                               {(() => {
+                                 const lines = data.keyCharacters.split('\n').filter(Boolean);
+                                 const preview = lines.slice(0, 2).join('\n');
+                                 return lines.length > 2 ? preview + '…' : preview;
+                               })()}
+                             </p>
+                           )}
+                         </>
+                       )}
+                     </div>
 
                     <div ref={editCardRef} className={`glass-panel p-6 rounded-xl border border-outline-variant/20 node-hover-effect transition-all duration-300 relative overflow-hidden ${
                       !isFinalized ? 'border-dashed opacity-80 hover:opacity-100' : ''
@@ -365,53 +387,15 @@ export default function Timeline({ project, nodes, updateNodeData, addNode, dele
                             </>
                           )}
                         </div>
-                      </div>
+                       </div>
 
-                      <div className={`sm:hidden ${!isLeft ? 'order-1' : ''}`}>
-                        {!isEditing && (
-                          <>
-                            <div className="font-label-sm text-label-sm text-indigo-electric font-semibold mb-1 uppercase tracking-wider">
-                              {data.year || 'Undated'}
-                            </div>
-                            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">
-                              {data.label || 'Untitled Event'}
-                            </h3>
-                          </>
-                        )}
-                      </div>
-
-                      {!isEditing && (
-                        <>
-                          {data.title && data.title !== data.label && (
-                            <p className="font-body-md text-body-md text-on-surface-variant mb-2 italic">
-                              {data.title}
-                            </p>
-                          )}
-                          {data.timing && (
-                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
-                              <span className="font-semibold text-outline">Timing:</span> {data.timing}
-                            </p>
-                          )}
-                          {data.spark && (
-                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">
-                              <span className="font-semibold text-outline">Spark:</span> {data.spark}
-                            </p>
-                          )}
-                          {data.keyCharacters && (
-                            <p className="font-body-sm text-body-sm text-on-surface-variant mb-2 whitespace-pre-wrap">
-                              <span className="font-semibold text-outline">Key Characters:</span>
-                              {(() => {
-                                const lines = data.keyCharacters.split('\n').filter(Boolean);
-                                const preview = lines.slice(0, 2).join('\n');
-                                return lines.length > 2 ? preview + '…' : preview;
-                              })()}
-                            </p>
-                          )}
-                          <p className={`font-body-md text-body-md ${isFinalized || isInProgress ? 'text-on-surface-variant' : 'text-on-surface-variant/70'} line-clamp-3`}>
-                            {data.description || 'No description provided.'}
-                          </p>
-                        </>
-                      )}
+                       {!isEditing && (
+                         <>
+                           <p className={`font-body-md text-body-md ${isFinalized || isInProgress ? 'text-on-surface-variant' : 'text-on-surface-variant/70'} line-clamp-3`}>
+                             {data.description || 'No description provided.'}
+                           </p>
+                         </>
+                       )}
                     </div>
 
                     {/* Reorder buttons */}

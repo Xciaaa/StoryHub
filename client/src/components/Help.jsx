@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import FeedbackModal from './FeedbackModal';
 
 const SECTIONS = [
   {
@@ -59,8 +60,9 @@ const SECTIONS = [
   },
 ];
 
-export default function Help() {
+export default function Help({ onOpenFeedback }) {
   const [open, setOpen] = useState({});
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const toggle = (title) => {
     setOpen((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -68,9 +70,18 @@ export default function Help() {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="mb-6 px-6 pt-6">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1">Help Center</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">Guides and tips to help you build your world.</p>
+      <div className="mb-6 px-6 pt-6 flex items-start justify-between">
+        <div>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1">Help Center</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant">Guides and tips to help you build your world.</p>
+        </div>
+        <button
+          onClick={() => setFeedbackOpen(true)}
+          className="md:hidden px-4 py-2 rounded-lg bg-indigo-electric text-on-primary hover:bg-indigo-electric/90 font-label-md text-label-md transition-colors flex items-center gap-2 shadow-lg shadow-indigo-electric/20"
+        >
+          <span className="material-symbols-outlined text-[16px]">rate_review</span>
+          Feedback
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 px-6 pb-6">
         {SECTIONS.map((section) => (
@@ -98,6 +109,8 @@ export default function Help() {
           </div>
         ))}
       </div>
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

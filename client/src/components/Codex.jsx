@@ -21,20 +21,34 @@ export default function Codex({ project, nodes, edges, updateNodeData, addNode, 
     return nodes.filter((n) => n.data?.type && CATEGORIES.includes(n.data.type) && !n.data?.trashed);
   }, [nodes]);
 
-  const filteredEntries = useMemo(() => {
-    let result = entries;
-    if (category !== 'All') {
-      result = result.filter((e) => e.data?.type === category);
-    }
-    if (status !== 'All') {
-      result = result.filter((e) => e.data?.status === status);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((e) => (e.data?.label || '').toLowerCase().includes(q) || (e.data?.description || '').toLowerCase().includes(q) || (e.data?.notes || '').toLowerCase().includes(q) || (e.data?.keyFigures || '').toLowerCase().includes(q));
-    }
-    return result.sort((a, b) => (a.data?.label || '').localeCompare(b.data?.label || ''));
-  }, [entries, category, status, search]);
+   const filteredEntries = useMemo(() => {
+     let result = entries;
+     if (category !== 'All') {
+       result = result.filter((e) => e.data?.type === category);
+     }
+     if (status !== 'All') {
+       result = result.filter((e) => e.data?.status === status);
+     }
+     if (search.trim()) {
+       const q = search.toLowerCase();
+       result = result.filter((e) => (e.data?.label || '').toLowerCase().includes(q) || (e.data?.description || '').toLowerCase().includes(q) || (e.data?.notes || '').toLowerCase().includes(q) || (e.data?.keyFigures || '').toLowerCase().includes(q));
+     }
+     const typeOrder = [];
+     const seenTypes = new Set();
+     for (const entry of result) {
+       const type = entry.data?.type;
+       if (type && !seenTypes.has(type)) {
+         seenTypes.add(type);
+         typeOrder.push(type);
+       }
+     }
+     return result.sort((a, b) => {
+       const aIdx = typeOrder.indexOf(a.data?.type);
+       const bIdx = typeOrder.indexOf(b.data?.type);
+       if (aIdx !== bIdx) return aIdx - bIdx;
+       return (a.data?.label || '').localeCompare(b.data?.label || '');
+     });
+   }, [entries, category, status, search]);
 
   const startEdit = (entry, field, value) => {
     setEditingId(entry.id);

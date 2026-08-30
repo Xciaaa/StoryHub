@@ -3,9 +3,10 @@ import SearchInput from './SearchInput';
 
 const CATEGORIES = ['Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'];
 
-export default function Graveyard({ project, nodes, updateNodeData }) {
+export default function Graveyard({ project, nodes, updateNodeData, permanentDeleteNode }) {
   const [filter, setFilter] = useState('');
   const [restoringId, setRestoringId] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const trashed = useMemo(() => {
     if (!nodes?.length) return [];
@@ -24,10 +25,8 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
   };
 
   const handlePermanentDelete = (node) => {
-    if (confirm(`Permanently delete "${node.data?.label || 'this item'}"? This cannot be undone.`)) {
-      // This will be handled by parent via a callback, for now we just mark it
-      updateNodeData(node.id, 'trashed', true);
-    }
+    permanentDeleteNode?.(node.id);
+    setDeleteConfirmId(null);
   };
 
   const getCategoryIcon = (type) => {
@@ -55,6 +54,8 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
     };
     return colors[type] || 'text-outline';
   };
+
+  const deleteTarget = deleteConfirmId ? trashed.find((n) => n.id === deleteConfirmId) : null;
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -98,7 +99,7 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
                   {isRestoring ? (
                     <div className="space-y-3">
                       <p className="font-body-md text-body-md text-on-surface mb-2">
-                        Restore "{data.label || 'Untitled'}" back to your project?
+                        Restore &quot;{data.label || 'Untitled'}&quot; back to your project?
                       </p>
                       <div className="flex justify-end gap-2 pt-2">
                         <button
@@ -140,7 +141,7 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
                             <span className="material-symbols-outlined text-[16px]">restore</span>
                           </button>
                           <button
-                            onClick={() => handlePermanentDelete(item)}
+                            onClick={() => setDeleteConfirmId(item.id)}
                             className="text-outline hover:text-red-400 p-1.5 rounded-md hover:bg-surface-variant/10 transition-colors"
                             title="Delete permanently"
                           >
@@ -156,6 +157,46 @@ export default function Graveyard({ project, nodes, updateNodeData }) {
           </div>
         )}
       </div>
+
+      {/* Permanent Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setDeleteConfirmId(null)}>
+          <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-headline-md text-headline-md text-on-surface">Permanent Delete</h3>
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-surface-variant/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                Permanently delete &quot;{deleteTarget.data?.label || 'this item'}&quot;? This cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface font-label-md text-label-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handlePermanentDelete(deleteTarget)}
+                  className="px-4 py-2 rounded-lg bg-error text-on-error hover:bg-error/90 font-label-md text-label-md transition-colors"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

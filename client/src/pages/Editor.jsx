@@ -22,7 +22,6 @@ import FeedbackModal from '../components/FeedbackModal';
 import Graveyard from '../components/Graveyard';
 import Help from '../components/Help';
 import InspectorSidebar from '../components/InspectorSidebar';
-import BottomTimeline from '../components/BottomTimeline';
 import { toPng } from 'html-to-image';
 import { api, API_BASE } from '../lib/api';
 import { useDebouncedEffect } from '../lib/useDebouncedEffect';
@@ -54,7 +53,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
   const zoomPercent = `${roundedZoom}%`;
 
   return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
+    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full floating-glass border border-outline-variant/30 z-20 shadow-xl">
       <button onClick={handleZoomOut} className="p-2 text-on-surface hover:text-indigo-electric transition-colors rounded-full hover:bg-surface-variant/50">
         <span className="material-symbols-outlined text-[20px]">zoom_out</span>
       </button>
@@ -78,7 +77,7 @@ function FloatingToolbar({ onAddNode, onSave, saveStatus, nodeType = 'Character'
       <select
         value={edgeFilter}
         onChange={(e) => setEdgeFilter(e.target.value)}
-        className="bg-surface-container/20 border border-outline-variant/30 rounded-lg text-on-surface font-label-sm text-[11px] px-2 py-1.5 outline-none cursor-pointer"
+        className="bg-surface-container/40 border border-outline-variant/30 rounded-lg text-on-surface font-label-sm text-[11px] px-2 py-1.5 outline-none cursor-pointer focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all"
       >
         <option value="all">All Edges</option>
         <option value="wears">wears</option>
@@ -185,7 +184,6 @@ export default function Editor() {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [newNodeType, setNewNodeType] = useState('Character');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [timelineCollapsed, setTimelineCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileFilter, setMobileFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -496,6 +494,11 @@ export default function Editor() {
     setNodes((nds) => attachNodeHandlers([...nds, newNode]));
   };
 
+  const permanentDeleteNode = useCallback((nodeId) => {
+    setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+    setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+  }, []);
+
   useEffect(() => {
     if (isFirstLoad.current || !id) {
       isFirstLoad.current = false;
@@ -699,7 +702,7 @@ export default function Editor() {
   }[saveStatus];
 
   return (
-    <div className="h-screen w-screen bg-background text-on-background font-body-md text-body-md grid grid-rows-[auto_1fr]">
+    <div className="h-full w-screen bg-background text-on-background font-body-md text-body-md grid grid-rows-[auto_1fr]">
       {/* Top Navigation */}
       <nav className="flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
         <div className="flex items-center gap-4">
@@ -825,7 +828,7 @@ export default function Editor() {
             <select
               value={newNodeType}
               onChange={(e) => setNewNodeType(e.target.value)}
-              className="w-full bg-surface-container/20 border border-outline-variant/30 rounded-xl text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner text-sm cursor-pointer"
+              className="w-full bg-surface-container/40 border border-outline-variant/30 rounded-xl text-on-surface font-body-md px-3 py-2 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all shadow-inner text-sm cursor-pointer"
             >
               <option value="Character">Character</option>
               <option value="Location">Location</option>
@@ -836,12 +839,24 @@ export default function Editor() {
               <option value="Theme">Theme</option>
             </select>
             <button
-              onClick={() => addNode({
-                id: `node_${Date.now()}`,
-                type: 'custom',
-                position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
-                data: { label: `New ${newNodeType}`, type: newNodeType, description: '', role: '', affiliation: '' },
-              })}
+              onClick={() => {
+                const base = {
+                  id: `node_${Date.now()}`,
+                  type: 'custom',
+                  position: { x: Math.random() * 400 + 200, y: Math.random() * 300 + 200 },
+                  description: '',
+                };
+                const typeData = {
+                  Character: { label: `New ${newNodeType}`, type: newNodeType, role: '', affiliation: '' },
+                  Location: { label: `New ${newNodeType}`, type: newNodeType, region: '', climate: '', population: '' },
+                  'Plot Event': { label: `New ${newNodeType}`, type: newNodeType, year: '', timing: '', spark: '' },
+                  Lore: { label: `New ${newNodeType}`, type: newNodeType, category: '' },
+                  Item: { label: `New ${newNodeType}`, type: newNodeType, itemType: '', rarity: '' },
+                  Faction: { label: `New ${newNodeType}`, type: newNodeType, leader: '', size: '' },
+                  Theme: { label: `New ${newNodeType}`, type: newNodeType, theme: '' },
+                };
+                addNode({ ...base, data: typeData[newNodeType] || base.data });
+              }}
               className="w-full py-2.5 bg-indigo-electric text-on-primary rounded-lg font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-indigo-electric/90 transition-all shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] border border-indigo-500/50"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
@@ -930,7 +945,7 @@ export default function Editor() {
       </aside>
 
       {/* Main Canvas */}
-      <main className="flex-1 relative overflow-hidden h-full min-h-0 pb-16 hidden md:block">
+      <main className="flex-1 relative overflow-hidden h-full min-h-0 hidden md:block">
         {activeTab === 'nodes' ? (
           <div className="absolute inset-0 h-full w-full">
             <ReactFlow
@@ -983,6 +998,27 @@ export default function Editor() {
                 <FloatingToolbar onAddNode={addNode} onSave={manualSave} saveStatus={saveStatus} nodeType={newNodeType} edgeFilter={edgeFilter} setEdgeFilter={setEdgeFilter} applyAutoLayout={applyAutoLayout} onExport={exportToPng} exportLoading={exportLoading} />
               )}
             </ReactFlow>
+            {/* Bottom Timeline - overlay inside ReactFlow */}
+            <div className="absolute bottom-4 left-4 right-4 z-20">
+              <div className="relative flex items-center">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-outline-variant/40" />
+                <div className="relative flex items-center gap-2 overflow-x-auto no-scrollbar px-1">
+                  {nodes.filter((n) => n.data?.type === 'Plot Event' && !n.data?.trashed).sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0)).slice(0, 10).map((evt, idx) => (
+                    <button
+                      key={evt.id}
+                      onClick={() => {
+                        setSelectedNodeId(evt.id);
+                        setInspectorOpen(true);
+                        setSelectedEdgeId(null);
+                      }}
+                      className="shrink-0 px-2 py-0.5 rounded-full bg-surface-container/20 backdrop-blur-sm border border-outline-variant/10 text-on-surface-variant hover:text-on-surface hover:bg-surface-container/40 transition-colors font-label-sm text-[10px]"
+                    >
+                      {evt.data?.label || `Event ${idx + 1}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="absolute inset-0 z-10 overflow-y-auto">
@@ -1029,9 +1065,10 @@ export default function Editor() {
                 project={project}
                 nodes={nodes}
                 updateNodeData={updateNodeData}
+                permanentDeleteNode={permanentDeleteNode}
               />
             )}
-            {activeTab === 'help' && <Help />}
+            {activeTab === 'help' && <Help onOpenFeedback={() => setFeedbackOpen(true)} />}
            </div>
          )}
        </main>
@@ -1061,87 +1098,128 @@ export default function Editor() {
         </button>
       </nav>
 
-      {/* Floating Action Button (Mobile) */}
-      <button 
-        aria-label="New Node" 
-        onClick={() => addNode()} 
-        className="fixed right-6 bottom-24 z-40 md:hidden w-[64px] h-[64px] bg-primary-container/80 text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform backdrop-blur-sm"
-      >
-        <span className="material-symbols-outlined text-[24px]">add</span>
-      </button>
-
-      {/* Mobile Node List View */}
       {activeTab === 'nodes' && (
-        <div className="md:hidden fixed inset-0 z-30 bg-background pt-20 pb-24 overflow-y-auto">
-          <div className="px-margin-mobile">
-            {/* Search */}
-            <div className="relative w-full mb-4">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">search</span>
-              <input 
-                className="w-full bg-surface-container-low border-b-2 border-transparent focus:border-primary-container text-on-surface font-body-md rounded-t-lg px-10 py-3 outline-none transition-colors placeholder:text-outline-variant"
-                placeholder="Search nodes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            {/* Filter Chips */}
-            <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 mb-4">
-              {['All', 'Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setMobileFilter(filter)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full font-label-sm text-label-sm transition-all ${
-                    mobileFilter === filter
-                      ? 'bg-primary-container/20 border border-primary-container text-primary'
-                      : 'bg-transparent border border-outline-variant/30 text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-            {/* Node Cards */}
-            <div className="flex flex-col gap-3">
-              {nodes.filter((n) => !n.data?.trashed).filter((n) => mobileFilter === 'All' || n.data?.type === mobileFilter).map((node) => (
-                <div
-                  key={node.id}
-                  onClick={() => {
-                    setSelectedNodeId(node.id);
-                    setInspectorOpen(true);
-                  }}
-                  className="node-card rounded-xl p-4 cursor-pointer"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant/20">
-                      <span className="material-symbols-outlined text-primary-container text-[24px]">
-                        {node.data?.type === 'Character' ? 'person' : node.data?.type === 'Location' ? 'location_on' : node.data?.type === 'Plot Event' ? 'event' : node.data?.type === 'Lore' ? 'menu_book' : node.data?.type === 'Item' ? 'shopping_bag' : node.data?.type === 'Faction' ? 'groups' : 'psychology'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-headline-md text-headline-md text-on-surface truncate">{node.data?.label || 'Untitled'}</h3>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">{node.data?.description || ''}</p>
-                      <div className="flex gap-2 mt-2">
-                        <span className="text-[10px] font-label-sm text-primary-container uppercase tracking-wider">{node.data?.type || 'Entity'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <button 
+          aria-label="New Node" 
+          onClick={() => addNode()} 
+          className="fixed right-6 bottom-24 z-40 md:hidden w-16 h-16 bg-primary-container/60 text-white/90 rounded-2xl flex items-center justify-center shadow-lg/50 hover:scale-105 active:scale-95 transition-transform backdrop-blur-sm"
+        >
+          <span className="material-symbols-outlined text-[24px]">add</span>
+        </button>
+      )}
+
+        {/* Mobile Content Views */}
+        <div className="md:hidden fixed top-16 left-0 right-0 bottom-24 z-30 bg-background overflow-y-auto">
+          {activeTab === 'nodes' && (
+            <>
+              {/* Search */}
+              <div className="relative w-full mb-4 px-margin-mobile">
+               <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">search</span>
+               <input 
+                 className="w-full bg-surface-container-low border-b-2 border-transparent focus:border-primary-container text-on-surface font-body-md rounded-t-lg px-10 py-3 outline-none transition-colors placeholder:text-outline-variant"
+                 placeholder="Search nodes..."
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+               />
+             </div>
+             {/* Filter Chips */}
+             <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 mb-4 px-margin-mobile">
+               {['All', 'Character', 'Location', 'Plot Event', 'Lore', 'Item', 'Faction', 'Theme'].map((filter) => (
+                 <button
+                   key={filter}
+                   onClick={() => setMobileFilter(filter)}
+                   className={`whitespace-nowrap px-4 py-1.5 rounded-full font-label-sm text-label-sm transition-all ${
+                     mobileFilter === filter
+                       ? 'bg-primary-container/20 border border-primary-container text-primary'
+                       : 'bg-transparent border border-outline-variant/30 text-on-surface-variant hover:text-on-surface'
+                   }`}
+                 >
+                   {filter}
+                 </button>
+               ))}
+             </div>
+             {/* Node Cards */}
+             <div className="flex flex-col gap-3 px-margin-mobile">
+               {nodes.filter((n) => !n.data?.trashed).filter((n) => mobileFilter === 'All' || n.data?.type === mobileFilter).map((node) => (
+                 <div
+                   key={node.id}
+                   onClick={() => {
+                     setSelectedNodeId(node.id);
+                     setInspectorOpen(true);
+                   }}
+                   className="node-card rounded-xl p-4 cursor-pointer"
+                 >
+                   <div className="flex items-start gap-3">
+                     <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant/20">
+                       <span className="material-symbols-outlined text-primary-container text-[24px]">
+                         {node.data?.type === 'Character' ? 'person' : node.data?.type === 'Location' ? 'location_on' : node.data?.type === 'Plot Event' ? 'event' : node.data?.type === 'Lore' ? 'menu_book' : node.data?.type === 'Item' ? 'shopping_bag' : node.data?.type === 'Faction' ? 'groups' : 'psychology'}
+                       </span>
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <h3 className="font-headline-md text-headline-md text-on-surface truncate">{node.data?.label || 'Untitled'}</h3>
+                       <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">{node.data?.description || ''}</p>
+                       <div className="flex gap-2 mt-2">
+                         <span className="text-[10px] font-label-sm text-primary-container uppercase tracking-wider">{node.data?.type || 'Entity'}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </>
+         )}
+         {activeTab === 'timeline' && (
+           <Timeline
+             project={project}
+             nodes={nodes}
+             updateNodeData={updateNodeData}
+             addNode={addNode}
+             deleteNode={(nodeId) => {
+               setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
+               setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+             }}
+           />
+         )}
+         {activeTab === 'atlas' && (
+           <Atlas
+             project={project}
+             nodes={nodes}
+             edges={edges}
+             updateNodeData={updateNodeData}
+             addNode={addNode}
+             deleteNode={(nodeId) => {
+               setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
+               setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+             }}
+           />
+         )}
+         {activeTab === 'codex' && (
+           <Codex
+             project={project}
+             nodes={nodes}
+             edges={edges}
+             updateNodeData={updateNodeData}
+             addNode={addNode}
+             deleteNode={(nodeId) => {
+               setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), trashed: true } } : n));
+               setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+             }}
+           />
+         )}
+         {activeTab === 'graveyard' && (
+           <Graveyard
+             project={project}
+             nodes={nodes}
+             updateNodeData={updateNodeData}
+             permanentDeleteNode={permanentDeleteNode}
+           />
+         )}
+           {activeTab === 'help' && <Help onOpenFeedback={() => setFeedbackOpen(true)} />}
         </div>
-       )}
 
-      {/* Bottom Timeline */}
-      <BottomTimeline nodes={nodes} edges={edges} onSelectNode={(id) => {
-        setSelectedNodeId(id);
-        setInspectorOpen(true);
-        setSelectedEdgeId(null);
-      }} collapsed={timelineCollapsed} onToggle={() => setTimelineCollapsed((v) => !v)} />
-
-      {/* Slide-out Inspector Panel */}
+       {/* Slide-out Inspector Panel */}
       {inspectorOpen && selectedNode && !selectedEdge && (
-        <aside className="fixed right-6 top-20 bottom-6 w-[30%] min-w-[320px] max-w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
+        <aside className="fixed right-4 top-20 bottom-24 md:bottom-6 left-4 md:left-auto md:w-[30%] md:min-w-[320px] md:max-w-105 md:right-6 rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
           <InspectorSidebar
             node={selectedNode}
             edges={edges}
@@ -1156,7 +1234,7 @@ export default function Editor() {
 
       {/* Edge Inspector */}
       {inspectorOpen && selectedEdge && (
-        <aside className="fixed right-6 top-20 bottom-6 w-[420px] rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
+        <aside className="fixed right-4 top-20 bottom-24 md:bottom-6 left-4 md:left-auto md:w-105 md:right-6 rounded-xl floating-glass border border-outline-variant/30 z-40 flex flex-col shadow-2xl overflow-hidden translate-x-0 transition-transform duration-300 inset-ring inset-ring-white/5 bg-surface-container/60">
           <div className="p-6 border-b border-outline-variant/30 flex justify-between items-start bg-surface-container/40">
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -1239,7 +1317,7 @@ export default function Editor() {
 
       {/* Delete Confirmation Dialog */}
       {pendingDelete && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-surface-container/60 backdrop-blur-sm" onClick={cancelDelete} />
           <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
             <div className="p-6">
@@ -1271,7 +1349,7 @@ export default function Editor() {
       )}
 
       {sessionExpired && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-80 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-surface-container/70 backdrop-blur-sm" />
           <div className="relative w-full max-w-md glass-panel rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
             <div className="p-6">
