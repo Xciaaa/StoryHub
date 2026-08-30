@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/AuthLayout';
-import { API_BASE } from '../lib/api';
+import { api, API_BASE } from '../lib/api';
 
 export default function Signup() {
-  const { signup } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -14,20 +12,40 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await signup(username, email, password);
-      navigate('/dashboard');
+      await api.signup({ username, email, password });
+      setSuccess(true);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <AuthLayout title="Account created" subtitle="You're almost ready">
+        <div className="w-full text-center space-y-4">
+          <span className="material-symbols-outlined text-5xl text-emerald-400 block">check_circle</span>
+          <p className="font-body-md text-body-md text-on-surface-variant">
+            Your account has been created successfully.
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="btn-primary w-full py-3 rounded-lg font-label-md text-label-md"
+          >
+            Proceed to Login
+          </button>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title="Create account" subtitle="Start mapping your story world">

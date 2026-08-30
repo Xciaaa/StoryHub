@@ -36,7 +36,7 @@ async function searchUsers(q) {
 
 async function getUserById(id) {
   const result = await query(
-    `SELECT id, username, email, avatar, bio, title, created_at FROM users WHERE id = $1`,
+    `SELECT id, username, email, avatar, bio, title, password_hash, created_at FROM users WHERE id = $1`,
     [id]
   );
   return result.rows[0] || null;
@@ -53,7 +53,7 @@ async function updateUser(id, { username, email, avatar, bio, title, emailNotifi
          email_notifications = COALESCE($7, email_notifications),
          push_notifications = COALESCE($8, push_notifications)
      WHERE id = $1
-     RETURNING id, username, email, avatar, bio, title, email_notifications, push_notifications, created_at`,
+     RETURNING id, username, email, avatar, bio, title, password_hash, email_notifications, push_notifications, created_at`,
     [id, username ?? null, email ?? null, avatar ?? null, bio ?? null, title ?? null, emailNotifications ?? null, pushNotifications ?? null]
   );
   return result.rows[0] || null;
