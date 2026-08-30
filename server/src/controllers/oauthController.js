@@ -28,6 +28,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  console.log('[OAuth] Registering Google strategy');
   passport.use(
     new GoogleStrategy(
       {
@@ -53,9 +54,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         }
     )
   );
+} else {
+  console.warn('[OAuth] Google strategy NOT registered: missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
 }
 
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  console.log('[OAuth] Registering GitHub strategy');
   passport.use(
     new GithubStrategy(
       {
@@ -83,6 +87,8 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
       }
     )
   );
+} else {
+  console.warn('[OAuth] GitHub strategy NOT registered: missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET');
 }
 
 module.exports = { passport, issueToken, serializeUser };

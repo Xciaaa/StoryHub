@@ -2,29 +2,24 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/AuthLayout';
-import { API_BASE } from '../lib/api';
+import { api, API_BASE } from '../lib/api';
 
 function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login, updateUser } = useAuth();
+  const { updateUser } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('token', token);
-      fetch(`${API_BASE}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch profile');
-          return res.json();
-        })
+      api.getProfile()
         .then((profile) => {
           updateUser(profile);
           navigate('/dashboard', { replace: true });
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('OAuth profile fetch failed:', err);
           localStorage.removeItem('token');
           navigate('/login', { replace: true });
         });
