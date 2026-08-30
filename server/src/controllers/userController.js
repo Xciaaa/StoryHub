@@ -71,6 +71,7 @@ const getProfile = asyncHandler(async (req, res) => {
     email_notifications: user.email_notifications,
     push_notifications: user.push_notifications,
     created_at: user.created_at,
+    has_password: !!user.password_hash,
   });
 });
 

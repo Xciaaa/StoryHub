@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /editor
+Disallow: /settings
+Disallow: /profile
+Disallow: /notifications
+Disallow: /login
+Disallow: /signup
+Disallow: /oauth
+
+Sitemap: https://story-hub-hmyo.vercel.app/sitemap.xml

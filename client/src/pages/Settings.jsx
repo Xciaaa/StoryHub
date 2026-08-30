@@ -40,6 +40,7 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [hasPassword, setHasPassword] = useState(true);
   const [recentProject, setRecentProject] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -64,6 +65,7 @@ export default function Settings() {
         emailNotifications: profile.email_notifications ?? true,
         pushNotifications: profile.push_notifications ?? true,
       });
+      setHasPassword(profile.has_password !== false);
       const sorted = Array.isArray(projects) ? projects.slice().sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0)) : [];
       setRecentProject(sorted[0] || null);
     } catch (err) {
@@ -108,6 +110,32 @@ export default function Settings() {
       await api.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordSuccess('Password updated successfully');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      setPasswordError(err.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await api.setPassword(passwordForm.newPassword);
+      setPasswordSuccess('Password set successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setHasPassword(true);
     } catch (err) {
       setPasswordError(err.message);
     } finally {
@@ -456,49 +484,93 @@ export default function Settings() {
                 <p className="font-body-md text-body-md text-on-surface-variant">Manage your account security preferences.</p>
               </div>
               <div className="flex flex-col gap-4">
-                <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Current Password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                      className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
-                      placeholder="Enter current password"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">New Password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                      className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
-                      placeholder="Enter new password"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
-                      placeholder="Confirm new password"
-                    />
-                  </div>
-                  {passwordError && <p className="text-error text-sm">{passwordError}</p>}
-                  {passwordSuccess && <p className="text-emerald-400 text-sm">{passwordSuccess}</p>}
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={changingPassword}
-                      className="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-label-md text-label-md shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all disabled:opacity-50"
-                    >
-                      {changingPassword ? 'Updating…' : 'Update Password'}
-                    </button>
-                  </div>
-                </form>
+                {hasPassword ? (
+                  <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Current Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
+                        placeholder="Enter new password"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
+                        placeholder="Confirm new password"
+                      />
+                    </div>
+                    {passwordError && <p className="text-error text-sm">{passwordError}</p>}
+                    {passwordSuccess && <p className="text-emerald-400 text-sm">{passwordSuccess}</p>}
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={changingPassword}
+                        className="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-label-md text-label-md shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all disabled:opacity-50"
+                      >
+                        {changingPassword ? 'Updating…' : 'Update Password'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={(e) => { e.preventDefault(); handleSetPassword(); }} className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Set Password</label>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Your account was created with Google or GitHub. Set a password to enable email/password login.</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
+                        placeholder="Enter new password"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-md text-body-md"
+                        placeholder="Confirm new password"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                    {passwordError && <p className="text-error text-sm">{passwordError}</p>}
+                    {passwordSuccess && <p className="text-emerald-400 text-sm">{passwordSuccess}</p>}
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={changingPassword}
+                        className="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-label-md text-label-md shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all disabled:opacity-50"
+                      >
+                        {changingPassword ? 'Saving…' : 'Set Password'}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           )}

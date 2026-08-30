@@ -100,6 +100,8 @@ export const api = {
   deleteNotification: (id) => request(`/api/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true }),
   changePassword: (currentPassword, newPassword) =>
     request('/api/auth/change-password', { method: 'POST', body: { currentPassword, newPassword }, auth: true }),
+  setPassword: (newPassword) =>
+    request('/api/auth/set-password', { method: 'POST', body: { newPassword }, auth: true }),
 
   toggleLike: (projectId) => request(`/api/projects/${projectId}/like`, { method: 'POST', auth: true }),
   getLikeCount: (projectId) => request(`/api/projects/${projectId}/likes/count`, { auth: true }),

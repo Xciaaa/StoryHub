@@ -97,4 +97,28 @@ const changePassword = asyncHandler(async (req, res) => {
   return res.json({ success: true });
 });
 
-module.exports = { signup, login, changePassword };
+const setPassword = asyncHandler(async (req, res) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).json({ error: 'newPassword is required' });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'password must be at least 8 characters' });
+  }
+
+  const user = await userService.getUserById(req.user.id);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await query(
+    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+    [newHash, req.user.id]
+  );
+
+  return res.json({ success: true });
+});
+
+module.exports = { signup, login, changePassword, setPassword };

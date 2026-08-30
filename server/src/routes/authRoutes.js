@@ -11,5 +11,6 @@ router.post('/login', authController.login);
 router.get('/me', requireAuth, userController.getProfile);
 router.put('/me', requireAuth, userController.updateProfile);
 router.post('/change-password', requireAuth, authController.changePassword);
+router.post('/set-password', requireAuth, authController.setPassword);
 
 module.exports = router;
