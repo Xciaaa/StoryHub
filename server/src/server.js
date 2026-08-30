@@ -26,6 +26,8 @@ const uploadController = require('./controllers/uploadController');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '2mb' }));
 
@@ -39,6 +41,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
     console.log('[CORS] blocked origin:', origin);
     return callback(null, true);
   },
