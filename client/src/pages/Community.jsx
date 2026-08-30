@@ -82,6 +82,8 @@ export default function Community() {
   const [libraryViewMode, setLibraryViewMode] = useState('grid');
   const [helpOpen, setHelpOpen] = useState(false);
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [architectsSearch, setArchitectsSearch] = useState('');
 
   useEffect(() => {
     loadData();
@@ -269,8 +271,17 @@ export default function Community() {
       {/* Top Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 glass-strong border-b border-outline-variant/30 flex justify-between items-center px-margin-desktop h-16">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+          >
+            <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+          <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
+          </Link>
+          <Link to="/dashboard" className="md:hidden">
+            <Logo className="w-8 h-8" />
           </Link>
         </div>
 
@@ -285,9 +296,9 @@ export default function Community() {
           />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <NotificationBell />
-          <Link to="/settings" className="text-on-surface-variant hover:text-primary-container transition-colors p-2 rounded-full hover:bg-surface-variant/20">
+          <Link to="/settings" className="text-on-surface-variant hover:text-primary-container transition-colors p-2 rounded-full hover:bg-surface-variant/20 hidden md:block">
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant/30">
@@ -296,7 +307,40 @@ export default function Community() {
         </div>
       </nav>
 
-      {/* Side Navigation */}
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            <span className="text-indigo-electric font-bold border-b-2 border-indigo-electric pb-1 opacity-90 font-label-md text-label-md py-2">Community</span>
+            <Link to="/editor" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Canvas</Link>
+             <Link to="/settings" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2 md:hidden" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+           </div>
+         </div>
+       )}
+
+       {/* Mobile Bottom Navigation */}
+       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-surface-container-low/90 backdrop-blur-lg border-t border-outline-variant/20 shadow-2xl md:hidden">
+         <button onClick={() => setActiveTab('world-feed')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'world-feed' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+           <span className="material-symbols-outlined mb-1 text-[24px]">public</span>
+           <span className="font-label-sm text-label-sm">Feed</span>
+         </button>
+         <button onClick={() => setActiveTab('prompts')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'prompts' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+           <span className="material-symbols-outlined mb-1 text-[24px]">auto_awesome</span>
+           <span className="font-label-sm text-label-sm">Prompts</span>
+         </button>
+         <button onClick={() => setActiveTab('architects')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'architects' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+           <span className="material-symbols-outlined mb-1 text-[24px]">workspace_premium</span>
+           <span className="font-label-sm text-label-sm">Architects</span>
+         </button>
+         <button onClick={() => setActiveTab('library')} className={`flex flex-col items-center justify-center rounded-2xl px-5 py-2 transition-all ${activeTab === 'library' ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>
+           <span className="material-symbols-outlined mb-1 text-[24px]">auto_stories</span>
+           <span className="font-label-sm text-label-sm">Library</span>
+         </button>
+       </nav>
+
+       {/* Side Navigation */}
       <aside className="hidden md:flex flex-col p-gutter gap-4 bg-surface-container-lowest/80 backdrop-blur-2xl border-r border-outline-variant/10 shadow-xl fixed left-0 top-16 h-[calc(100vh-64px)] w-panel-width z-40">
         <div className="flex items-center gap-3 p-2 mb-4 border-b border-outline-variant/20 pb-4">
           <div className="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
@@ -373,7 +417,7 @@ export default function Community() {
       </aside>
 
       {/* Main Content */}
-      <main className="pt-20 pb-12 px-4 md:px-8 md:ml-[320px] min-h-screen">
+      <main className="pt-20 pb-24 md:pb-12 px-4 md:px-8 md:ml-[320px] min-h-screen">
         <div className="max-w-[1200px] mx-auto space-y-8">
           {/* Hero Section */}
           <section className="text-center md:text-left space-y-3">
@@ -550,11 +594,28 @@ export default function Community() {
               )}
               {activeTab === 'architects' && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
-                    <h2 className="font-headline-md text-on-surface">All Architects</h2>
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                      <h2 className="font-headline-md text-on-surface">All Architects</h2>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Discover and follow world builders.</p>
+                    </div>
+                    <SearchInput
+                      value={architectsSearch}
+                      onChange={setArchitectsSearch}
+                      placeholder="Search architects..."
+                      type="users"
+                      className="w-full sm:w-64"
+                    />
                   </div>
                   <div className="flex flex-col gap-3">
-                    {architects.map((architect) => {
+                    {architects.filter((architect) => {
+                      const query = architectsSearch.trim().toLowerCase();
+                      if (!query) return true;
+                      return (
+                        architect.username?.toLowerCase().includes(query) ||
+                        architect.bio?.toLowerCase().includes(query)
+                      );
+                    }).map((architect) => {
                       const isFollowing = followingIds[architect.id] || false;
                       const isLoading = followLoadingIds[architect.id] || false;
                       return (
@@ -567,7 +628,7 @@ export default function Community() {
                             </div>
                             <div className="flex flex-col min-w-0">
                               <span className="font-label-md text-on-surface truncate">{architect.username}</span>
-                              <span className="font-label-sm text-on-surface-variant">Architect</span>
+                              <span className="font-label-sm text-on-surface-variant">{architect.title || 'Architect'}</span>
                             </div>
                           </Link>
                           {user && architect.id !== user.id && (
@@ -848,7 +909,7 @@ export default function Community() {
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="font-label-md text-on-surface truncate">{architect.username}</span>
-                            <span className="font-label-sm text-on-surface-variant">Architect</span>
+                            <span className="font-label-sm text-on-surface-variant">{architect.title || 'Architect'}</span>
                           </div>
                         </Link>
                         {user && architect.id !== user.id && (

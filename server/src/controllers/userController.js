@@ -67,6 +67,7 @@ const getProfile = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     bio: user.bio,
+    title: user.title,
     email_notifications: user.email_notifications,
     push_notifications: user.push_notifications,
     created_at: user.created_at,
@@ -74,12 +75,13 @@ const getProfile = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { username, email, avatar, bio, emailNotifications, pushNotifications } = req.body;
+  const { username, email, avatar, bio, title, emailNotifications, pushNotifications } = req.body;
   const user = await userService.updateUser(req.user.id, {
     username,
     email,
     avatar,
     bio,
+    title,
     emailNotifications,
     pushNotifications,
   });
@@ -92,6 +94,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     bio: user.bio,
+    title: user.title,
     email_notifications: user.email_notifications,
     push_notifications: user.push_notifications,
     created_at: user.created_at,

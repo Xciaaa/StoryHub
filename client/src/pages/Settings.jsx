@@ -28,6 +28,7 @@ export default function Settings() {
     email: '',
     avatar: '',
     bio: '',
+    title: '',
     emailNotifications: true,
     pushNotifications: true,
   });
@@ -40,6 +41,7 @@ export default function Settings() {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [recentProject, setRecentProject] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -58,6 +60,7 @@ export default function Settings() {
         email: profile.email || '',
         avatar: profile.avatar || '',
         bio: profile.bio || '',
+        title: profile.title || '',
         emailNotifications: profile.email_notifications ?? true,
         pushNotifications: profile.push_notifications ?? true,
       });
@@ -151,8 +154,19 @@ export default function Settings() {
     <div className="min-h-screen bg-background text-on-surface">
       {/* Top Navigation */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
-        <div className="flex items-center gap-8">
-          <span className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">LoreCanvas</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+          >
+            <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+          <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+            LoreCanvas
+          </Link>
+          <Link to="/dashboard" className="md:hidden">
+            <Logo className="w-8 h-8" />
+          </Link>
           <nav className="hidden md:flex gap-6">
             <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md">Dashboard</Link>
             {recentProject ? (
@@ -165,19 +179,35 @@ export default function Settings() {
         </div>
         <div className="flex items-center gap-4">
           <NotificationBell />
-          <Link to="/settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
-            <span className="material-symbols-outlined">settings</span>
+          <Link to={`/profile/${user?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+            <Avatar src={form.avatar || user?.avatar} alt="User profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </header>
 
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            {recentProject ? (
+              <Link to={`/editor/${recentProject.id}`} className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Canvas</Link>
+            ) : (
+              <span className="text-on-surface-variant/50 font-label-md text-label-md cursor-not-allowed py-2">Canvas</span>
+            )}
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Community</Link>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-6">
+        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-6 px-4 md:px-6">
           {/* Left Sidebar */}
           <aside className="w-full md:w-[280px] shrink-0">
             <h2 className="font-headline-md text-headline-md text-on-surface mb-4 md:hidden">Settings</h2>
-            <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-4 md:pb-0">
+            <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-4 md:pb-0 scrollbar-hide">
               {SECTIONS.map((section) => (
                 <button
                   key={section.id}
@@ -250,6 +280,15 @@ export default function Settings() {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Title / Role</label>
+                      <input
+                        value={form.title}
+                        onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                        className="input-line w-full text-on-surface py-2 font-body-lg text-body-lg"
+                        placeholder="e.g. World Builder, Storyteller, Architect"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
                       <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Email Address</label>
                       <input
                         type="email"
@@ -271,7 +310,14 @@ export default function Settings() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end pt-4 mt-2 border-t border-glass-border">
+                <div className="flex flex-col sm:flex-row justify-end pt-4 mt-2 border-t border-glass-border gap-3">
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="px-4 py-2 rounded-lg border border-error/30 text-error hover:bg-error/10 font-label-md text-label-md transition-colors"
+                  >
+                    Log Out
+                  </button>
                   <button
                     type="submit"
                     disabled={saving}
@@ -487,22 +533,6 @@ export default function Settings() {
             </div>
             )}
           </section>
-
-          <div className="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline-lg text-headline-lg text-error">Danger Zone</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant">Irreversible account actions.</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full px-4 py-2 rounded-lg border border-error/30 text-error hover:bg-error/10 font-label-md text-label-md transition-colors"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
         </div>
       </main>
     </div>

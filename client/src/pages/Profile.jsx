@@ -25,6 +25,7 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -164,9 +165,18 @@ export default function Profile() {
     <div className="min-h-screen bg-background text-on-surface">
       {/* Top Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 glass-strong border-b border-outline-variant/30">
-        <div className="flex items-center gap-8">
-          <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+          >
+            <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+          <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
             LoreCanvas
+          </Link>
+          <Link to="/dashboard" className="md:hidden">
+            <Logo className="w-8 h-8" />
           </Link>
           <div className="hidden md:flex gap-6 items-center">
             <Link to="/dashboard" className="text-on-surface-variant font-medium font-label-md text-label-md hover:text-primary transition-colors duration-200">
@@ -182,7 +192,7 @@ export default function Profile() {
         </div>
         <div className="flex items-center gap-4">
           <NotificationBell />
-          <Link to="/settings" aria-label="Settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200">
+          <Link to="/settings" aria-label="Settings" className="text-on-surface-variant hover:text-primary transition-colors duration-200 hidden md:block">
             <span className="material-symbols-outlined">settings</span>
           </Link>
           <Link to={`/profile/${currentUser?.username}`} className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
@@ -191,12 +201,25 @@ export default function Profile() {
         </div>
       </nav>
 
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            <Link to="/editor/new" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Canvas</Link>
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Community</Link>
+            <Link to="/settings" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
-      <main className="pt-24 pb-20 md:pb-6 px-4 md:px-12 max-w-[1600px] mx-auto min-h-screen">
+      <main className="pt-20 md:pt-24 pb-20 md:pb-6 px-4 md:px-8 max-w-[1200px] mx-auto min-h-screen">
         {/* Profile Header (Cinematic) */}
-        <header className="relative w-full rounded-xl overflow-hidden glass-panel mb-8 border border-outline-variant/30">
+        <header className="relative w-full rounded-xl overflow-hidden glass-panel mb-6 md:mb-8 border border-outline-variant/30">
           {/* Cover Art */}
-          <div className="absolute inset-0 z-0 h-48 md:h-64 opacity-50">
+          <div className="absolute inset-0 z-0 h-32 md:h-48 opacity-50">
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{
@@ -204,10 +227,10 @@ export default function Profile() {
               }}
             />
           </div>
-          <div className={`absolute inset-0 z-0 bg-gradient-to-t ${coverGradient} h-48 md:h-64`} />
-          <div className="relative z-10 pt-32 md:pt-40 px-6 md:px-10 pb-8 flex flex-col md:flex-row gap-6 items-end">
+          <div className={`absolute inset-0 z-0 bg-gradient-to-t ${coverGradient} h-32 md:h-48`} />
+          <div className="relative z-10 pt-24 md:pt-36 px-4 md:px-8 pb-6 flex flex-col md:flex-row gap-4 md:gap-6 items-end">
             {/* Avatar */}
-            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-2 border-primary-container shadow-[0_0_30px_rgba(79,70,229,0.4)] shrink-0">
+            <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-xl overflow-hidden border-2 border-primary-container shadow-[0_0_30px_rgba(79,70,229,0.4)] shrink-0">
               <Avatar src={profile.avatar} alt={profile.username} className="w-full h-full object-cover" />
             </div>
             {/* User Info */}
@@ -216,7 +239,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <span className="px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-bold bg-primary-container/20 text-primary border border-primary-container/50">
-                      Master Rank
+                      {profile.title || 'Architect'}
                     </span>
                     <span className="font-label-md text-label-md text-secondary flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">verified</span>
@@ -257,7 +280,7 @@ export default function Profile() {
           </div>
 
           {/* Stats Strip */}
-          <div className="relative z-10 border-t border-outline-variant/30 bg-surface-container-highest/30 backdrop-blur-md px-6 md:px-10 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="relative z-10 border-t border-outline-variant/30 bg-surface-container-highest/30 backdrop-blur-md px-4 md:px-8 py-3 md:py-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <div>
               <div className="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Universes Created</div>
               <div className="font-headline-md text-headline-md text-primary">{stats.universesCreated}</div>
@@ -278,16 +301,16 @@ export default function Profile() {
         </header>
 
         {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left Column: Portfolio */}
-          <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
             <h2 className="font-headline-md text-headline-md text-on-surface border-b border-outline-variant/30 pb-2">
               Public Portfolio
             </h2>
             {projects.length === 0 ? (
               <p className="text-on-surface-variant text-sm">No public projects yet.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {projects.map((p) => (
                   <Link
                     key={p.id}
@@ -354,7 +377,7 @@ export default function Profile() {
           </div>
 
           {/* Right Column: Bio & Info */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 md:gap-6">
             <section className="glass-panel p-6 rounded-xl">
               <h3 className="font-headline-md text-[20px] text-on-surface mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">fingerprint</span>

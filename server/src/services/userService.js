@@ -28,7 +28,7 @@ async function createUser({ username, email, passwordHash }) {
 
 async function searchUsers(q) {
   const result = await query(
-    `SELECT id, username, email, avatar, bio, created_at FROM users WHERE username ILIKE $1 ORDER BY username ASC LIMIT 20`,
+    `SELECT id, username, email, avatar, bio, title, created_at FROM users WHERE username ILIKE $1 ORDER BY username ASC LIMIT 20`,
     [`%${q}%`]
   );
   return result.rows;
@@ -36,24 +36,25 @@ async function searchUsers(q) {
 
 async function getUserById(id) {
   const result = await query(
-    `SELECT id, username, email, avatar, bio, created_at FROM users WHERE id = $1`,
+    `SELECT id, username, email, avatar, bio, title, created_at FROM users WHERE id = $1`,
     [id]
   );
   return result.rows[0] || null;
 }
 
-async function updateUser(id, { username, email, avatar, bio, emailNotifications, pushNotifications }) {
+async function updateUser(id, { username, email, avatar, bio, title, emailNotifications, pushNotifications }) {
   const result = await query(
     `UPDATE users
      SET username = COALESCE($2, username),
          email = COALESCE($3, email),
          avatar = COALESCE($4, avatar),
          bio = COALESCE($5, bio),
-         email_notifications = COALESCE($6, email_notifications),
-         push_notifications = COALESCE($7, push_notifications)
+         title = COALESCE($6, title),
+         email_notifications = COALESCE($7, email_notifications),
+         push_notifications = COALESCE($8, push_notifications)
      WHERE id = $1
-     RETURNING id, username, email, avatar, bio, email_notifications, push_notifications, created_at`,
-    [id, username ?? null, email ?? null, avatar ?? null, bio ?? null, emailNotifications ?? null, pushNotifications ?? null]
+     RETURNING id, username, email, avatar, bio, title, email_notifications, push_notifications, created_at`,
+    [id, username ?? null, email ?? null, avatar ?? null, bio ?? null, title ?? null, emailNotifications ?? null, pushNotifications ?? null]
   );
   return result.rows[0] || null;
 }

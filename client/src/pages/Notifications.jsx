@@ -59,6 +59,7 @@ export default function Notifications() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const loadNotifications = async (pageNum = 1, filter = activeFilter) => {
     setLoading(true);
@@ -160,9 +161,18 @@ export default function Notifications() {
       {/* Top Navigation */}
       <header className="fixed top-0 left-0 w-full z-50 glass-strong border-b border-outline-variant/30 h-16">
         <div className="flex justify-between items-center px-margin-desktop h-full w-full">
-          <div className="flex items-center gap-8">
-            <Link to="/dashboard" className="font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2"
+            >
+              <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+            </button>
+            <Link to="/dashboard" className="hidden md:block font-display-lg text-display-lg font-bold text-on-surface tracking-tight">
               LoreCanvas
+            </Link>
+            <Link to="/dashboard" className="md:hidden">
+              <Logo className="w-8 h-8" />
             </Link>
             <nav className="hidden md:flex gap-6">
               <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-300">
@@ -196,6 +206,18 @@ export default function Notifications() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 glass-strong border-b border-outline-variant/30 p-4 flex flex-col gap-2">
+            <Link to="/dashboard" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+            <Link to="/editor/new" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Canvas</Link>
+            <Link to="/community" className="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md py-2" onClick={() => setMobileMenuOpen(false)}>Community</Link>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="pt-32 pb-24 md:pb-8 px-4 md:px-12 flex justify-center w-full min-h-screen">
