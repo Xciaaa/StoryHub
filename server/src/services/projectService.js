@@ -1,23 +1,90 @@
 const { query } = require('../config/db');
-const { redisClient, isConnected } = require('../config/redis');
+const {
+  redisClient,
+  ensureConnected,
+  getCached,
+  setCached,
+  deleteCached,
+  deleteCachedMany,
+  getCachedMany,
+  setCachedMany,
+} = require('../config/redis');
 
 const PUBLIC_CACHE_TTL_SECONDS = 60;
-const publicCacheKey = (id) => `community:project:${id}`;
+const PUBLIC_CACHE_STALE_TTL_SECONDS = 3600;
+const PUBLIC_LIST_CACHE_TTL_SECONDS = 30;
+const PUBLIC_LIST_CACHE_STALE_TTL_SECONDS = 300;
+const CACHE_KEY_VERSION = 'v1';
+
+const publicCacheKey = (id) => `cache:${CACHE_KEY_VERSION}:project:${id}`;
+const publicListCacheKey = (page, limit) => `cache:${CACHE_KEY_VERSION}:projects:${page}:${limit}`;
+const trendingListCacheKey = () => `cache:${CACHE_KEY_VERSION}:projects:trending`;
 
 async function getCached(key) {
-  if (!isConnected()) return null;
-  const cached = await redisClient.get(key);
-  return cached ? JSON.parse(cached) : null;
+  if (!(await ensureConnected())) return null;
+  try {
+    const cached = await redisClient.get(key);
+    return cached ? JSON.parse(cached) : null;
+  } catch (err) {
+    console.error('Redis get error:', err.message);
+    return null;
+  }
 }
 
-async function setCached(key, value) {
-  if (!isConnected()) return;
-  await redisClient.set(key, JSON.stringify(value), { EX: PUBLIC_CACHE_TTL_SECONDS });
+async function setCached(key, value, ttlSeconds) {
+  if (!(await ensureConnected())) return;
+  try {
+    await redisClient.set(key, JSON.stringify(value), { EX: ttlSeconds });
+  } catch (err) {
+    console.error('Redis set error:', err.message);
+  }
 }
 
 async function deleteCached(key) {
-  if (!isConnected()) return;
-  await redisClient.del(key);
+  if (!(await ensureConnected())) return;
+  try {
+    await redisClient.del(key);
+  } catch (err) {
+    console.error('Redis delete error:', err.message);
+  }
+}
+
+async function deleteCachedMany(keys) {
+  if (!(await ensureConnected())) return;
+  if (!Array.isArray(keys) || keys.length === 0) return;
+  try {
+    const pipeline = redisClient.multi();
+    keys.forEach((key) => pipeline.del(key));
+    await pipeline.exec();
+  } catch (err) {
+    console.error('Redis deleteMany error:', err.message);
+  }
+}
+
+async function getCachedMany(keys) {
+  if (!(await ensureConnected())) return [];
+  if (!Array.isArray(keys) || keys.length === 0) return [];
+  try {
+    const values = await redisClient.mGet(keys);
+    return values.map((val) => (val ? JSON.parse(val) : null));
+  } catch (err) {
+    console.error('Redis getMany error:', err.message);
+    return [];
+  }
+}
+
+async function setCachedMany(keyValuePairs, ttlSeconds) {
+  if (!(await ensureConnected())) return;
+  if (!Array.isArray(keyValuePairs) || keyValuePairs.length === 0) return;
+  try {
+    const pipeline = redisClient.multi();
+    keyValuePairs.forEach(({ key, value }) => {
+      pipeline.set(key, JSON.stringify(value), { EX: ttlSeconds });
+    });
+    await pipeline.exec();
+  } catch (err) {
+    console.error('Redis setMany error:', err.message);
+  }
 }
 
 /**
@@ -93,7 +160,7 @@ async function updateProject({ id, userId, title, description, canvasData, isPub
   const updated = result.rows[0] || null;
 
   if (updated) {
-    await deleteCached(publicCacheKey(id));
+    await invalidateProjectCaches(id);
     await recordProjectActivity({
       projectId: id,
       userId,
@@ -112,10 +179,20 @@ async function deleteProject({ id, userId }) {
   );
 
   if (result.rowCount > 0) {
-    await deleteCached(publicCacheKey(id));
+    await invalidateProjectCaches(id);
   }
 
   return result.rowCount > 0;
+}
+
+async function invalidateProjectCaches(projectId) {
+  const keysToDelete = [
+    publicCacheKey(projectId),
+    publicListCacheKey(1, 20),
+    publicListCacheKey(1, 100),
+    trendingListCacheKey(),
+  ];
+  await deleteCachedMany(keysToDelete);
 }
 
 async function recordProjectActivity({ projectId, userId, action, canvasData }) {
@@ -196,10 +273,17 @@ async function getActivityHeatmap(userId) {
  */
 async function getPublicProject(id) {
   const cacheKey = publicCacheKey(id);
+  const staleKey = `${cacheKey}:stale`;
 
   const cached = await getCached(cacheKey);
   if (cached) {
     return { data: cached, fromCache: true };
+  }
+
+  const stale = await getCached(staleKey);
+  if (stale) {
+    refreshPublicProjectCacheInBackground(id, cacheKey, staleKey);
+    return { data: stale, fromCache: true, stale: true };
   }
 
   const result = await query(
@@ -227,13 +311,50 @@ async function getPublicProject(id) {
     trending_score: (parseInt(project.like_count || '0', 10) * 2) + (parseInt(project.fork_count || '0', 10) * 3),
   };
 
-  await setCached(cacheKey, enriched);
+  await setCached(cacheKey, enriched, PUBLIC_CACHE_TTL_SECONDS);
+  await setCached(staleKey, enriched, PUBLIC_CACHE_STALE_TTL_SECONDS);
 
   return { data: enriched, fromCache: false };
 }
 
+async function refreshPublicProjectCacheInBackground(id, cacheKey, staleKey) {
+  try {
+    const result = await query(
+      `SELECT p.id, p.title, p.description, p.cover_image, p.genre, p.canvas_data, p.updated_at, p.user_id, u.username, u.avatar,
+              COUNT(DISTINCT l.user_id) AS like_count,
+              COUNT(DISTINCT f2.id) AS fork_count
+       FROM projects p
+       LEFT JOIN users u ON p.user_id = u.id
+       LEFT JOIN likes l ON l.project_id = p.id
+       LEFT JOIN projects f2 ON f2.parent_project_id = p.id
+       WHERE p.id = $1 AND p.is_public = true
+       GROUP BY p.id, u.username, u.avatar`,
+      [id]
+    );
+
+    const project = result.rows[0] || null;
+    if (!project) return null;
+
+    const enriched = {
+      ...project,
+      like_count: parseInt(project.like_count || '0', 10),
+      fork_count: parseInt(project.fork_count || '0', 10),
+      trending_score: (parseInt(project.like_count || '0', 10) * 2) + (parseInt(project.fork_count || '0', 10) * 3),
+    };
+
+    await setCached(cacheKey, enriched, PUBLIC_CACHE_TTL_SECONDS);
+    await setCached(staleKey, enriched, PUBLIC_CACHE_STALE_TTL_SECONDS);
+    return enriched;
+  } catch (err) {
+    console.error('Background project cache refresh failed:', err.message);
+    return null;
+  }
+}
+
 const PUBLIC_LIST_CACHE_TTL_SECONDS = 30;
-const publicListCacheKey = (page, limit) => `community:projects:${page}:${limit}`;
+const PUBLIC_LIST_CACHE_STALE_TTL_SECONDS = 300;
+const publicListCacheKey = (page, limit) => `cache:${CACHE_KEY_VERSION}:projects:${page}:${limit}`;
+const trendingListCacheKey = () => `cache:${CACHE_KEY_VERSION}:projects:trending`;
 
 async function listPublicProjects({ page = 1, limit = 20 } = {}) {
   const offset = (page - 1) * limit;
@@ -244,6 +365,19 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
     return { data: cached, fromCache: true };
   }
 
+  const staleKey = `${cacheKey}:stale`;
+  const stale = await getCached(staleKey);
+  if (stale) {
+    refreshPublicListCacheInBackground(page, limit, cacheKey, staleKey);
+    return { data: stale, fromCache: true, stale: true };
+  }
+
+  const { data, fromCache } = await fetchAndCachePublicProjects(page, limit, cacheKey, staleKey);
+  return { data, fromCache };
+}
+
+async function fetchAndCachePublicProjects(page, limit, cacheKey, staleKey) {
+  const offset = (page - 1) * limit;
   const result = await query(
     `SELECT 
        p.id, p.title, p.description, p.cover_image, p.genre, p.updated_at, p.user_id, u.username, u.avatar,
@@ -269,9 +403,20 @@ async function listPublicProjects({ page = 1, limit = 20 } = {}) {
     trending_score: (parseInt(row.like_count || '0', 10) * 2) + (parseInt(row.fork_count || '0', 10) * 3),
   }));
 
-  await setCached(cacheKey, projects);
+  await setCached(cacheKey, projects, PUBLIC_LIST_CACHE_TTL_SECONDS);
+  await setCached(staleKey, projects, PUBLIC_LIST_CACHE_STALE_TTL_SECONDS);
 
   return { data: projects, fromCache: false };
+}
+
+async function refreshPublicListCacheInBackground(page, limit, cacheKey, staleKey) {
+  try {
+    const { data } = await fetchAndCachePublicProjects(page, limit, cacheKey, staleKey);
+    return data;
+  } catch (err) {
+    console.error('Background cache refresh failed:', err.message);
+    return null;
+  }
 }
 
 async function saveProject({ userId, projectId }) {

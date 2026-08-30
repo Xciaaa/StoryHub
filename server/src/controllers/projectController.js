@@ -102,13 +102,23 @@ const deleteProject = asyncHandler(async (req, res) => {
  * write-through cache on miss, handled inside projectService.
  */
 const getPublicProject = asyncHandler(async (req, res) => {
-  const { data, fromCache } = await projectService.getPublicProject(req.params.id);
+  const { data, fromCache, stale } = await projectService.getPublicProject(req.params.id);
 
   if (!data) {
     return res.status(404).json({ error: 'Project not found or not public' });
   }
 
-  res.set('X-Cache', fromCache ? 'HIT' : 'MISS');
+  if (stale) {
+    res.set('X-Cache', 'STALE');
+    res.set('Cache-Control', 'public, max-age=0, s-maxage=5, stale-while-revalidate=300');
+  } else if (fromCache) {
+    res.set('X-Cache', 'HIT');
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=300');
+  } else {
+    res.set('X-Cache', 'MISS');
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=300');
+  }
+
   return res.json(data);
 });
 
@@ -120,9 +130,19 @@ const listPublicProjects = asyncHandler(async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page || '1', 10));
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
 
-  const { data, fromCache } = await projectService.listPublicProjects({ page, limit });
+  const { data, fromCache, stale } = await projectService.listPublicProjects({ page, limit });
 
-  res.set('X-Cache', fromCache ? 'HIT' : 'MISS');
+  if (stale) {
+    res.set('X-Cache', 'STALE');
+    res.set('Cache-Control', 'public, max-age=0, s-maxage=5, stale-while-revalidate=300');
+  } else if (fromCache) {
+    res.set('X-Cache', 'HIT');
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=300');
+  } else {
+    res.set('X-Cache', 'MISS');
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=300');
+  }
+
   return res.json(data);
 });
 
