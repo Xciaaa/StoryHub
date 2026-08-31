@@ -34,7 +34,7 @@ pool.on('error', (err) => {
  */
 async function query(text, params) {
   const start = Date.now();
-  const maxRetries = 2;
+  const maxRetries = 3;
   let lastErr;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -46,9 +46,10 @@ async function query(text, params) {
     } catch (err) {
       lastErr = err;
       const msg = (err && err.message) ? err.message : String(err);
-      const retryable = /terminat|timeout|socket hang up|ECONNRESET|ETIMEDOUT|connection.*close|too many clients|Connection terminated|Connection refused/i.test(msg);
+      console.error(`Query attempt ${attempt + 1} failed:`, { text: text.slice(0, 50), error: msg });
+      const retryable = /terminat|timeout|socket hang up|ECONNRESET|ETIMEDOUT|connection.*close|too many clients|Connection terminated|Connection refused|server closed the connection|connection lost/i.test(msg);
       if (!retryable || attempt === maxRetries) break;
-      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
     }
   }
   throw lastErr;
