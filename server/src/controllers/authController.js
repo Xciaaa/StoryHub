@@ -29,7 +29,14 @@ const signup = asyncHandler(async (req, res) => {
     return res.status(409).json({ error: 'An account with that email already exists' });
   }
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  let passwordHash;
+  try {
+    passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  } catch (err) {
+    console.error('bcrypt hash failed during signup:', err);
+    return res.status(500).json({ error: 'Failed to create password hash' });
+  }
+
   const user = await userService.createUser({ username, email, passwordHash });
   const token = issueToken(user);
 
@@ -51,7 +58,14 @@ const login = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  let valid = false;
+  try {
+    valid = await bcrypt.compare(password, user.password_hash);
+  } catch (err) {
+    console.error('bcrypt compare failed during login:', err);
+    return res.status(500).json({ error: 'Authentication service error. Please try again.' });
+  }
+
   if (!valid) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
@@ -93,11 +107,23 @@ const changePassword = asyncHandler(async (req, res) => {
     return res.status(500).json({ error: 'Password verification failed' });
   }
 
-  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await query(
-    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-    [newHash, req.user.id]
-  );
+  let newHash;
+  try {
+    newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  } catch (err) {
+    console.error('bcrypt hash failed:', err);
+    return res.status(500).json({ error: 'Failed to hash new password' });
+  }
+
+  try {
+    await query(
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [newHash, req.user.id]
+    );
+  } catch (err) {
+    console.error('Database update failed:', err);
+    return res.status(500).json({ error: 'Failed to update password' });
+  }
 
   return res.json({ success: true });
 });
@@ -117,11 +143,23 @@ const setPassword = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await query(
-    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-    [newHash, req.user.id]
-  );
+  let newHash;
+  try {
+    newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  } catch (err) {
+    console.error('bcrypt hash failed:', err);
+    return res.status(500).json({ error: 'Failed to hash password' });
+  }
+
+  try {
+    await query(
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [newHash, req.user.id]
+    );
+  } catch (err) {
+    console.error('Database update failed:', err);
+    return res.status(500).json({ error: 'Failed to set password' });
+  }
 
   return res.json({ success: true });
 });
