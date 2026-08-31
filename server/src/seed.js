@@ -8,7 +8,7 @@ const SALT_ROUNDS = 10;
 const DEMO_USER = {
   username: 'LoreArchitect',
   email: 'demo@storyhub.app',
-  password: 'demo1234',
+  password: 'S3cur3L0recraft!2024',
   avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBtavyHa8gkS0Jnv1r9NTxqoSpUPAUo45ym88VCLyOmQxfqz0iHbJ-JWJX7Lov7Xn3aq2RKO_ulZCwt9rr8sj54It-VbPhtYQeCCHV32NWF9XKjCMNhu37KqSAvl-jzxdeUtXTD4YhswWSDar_VW0N-DVpw-NscxsoFnPa7aqqfG_5dQ5c02oy8MViOU_RgLW2ULajhroiqJfLP9mD__0PyRytETSTuTxamh0fZ2hlPaH-ArAJIZ7e0ew',
   bio: 'Worldbuilder. I craft interconnected story universes using Lore Canvas.'
 };

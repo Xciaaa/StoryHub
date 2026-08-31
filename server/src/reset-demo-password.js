@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const { query } = require('./config/db');
 
 const DEMO_EMAIL = 'demo@storyhub.app';
-const NEW_PASSWORD = 'demo1234';
+const NEW_PASSWORD = 'S3cur3L0recraft!2024';
 const SALT_ROUNDS = 10;
 
 async function reset() {
