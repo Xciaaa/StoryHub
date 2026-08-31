@@ -121,7 +121,7 @@ const changePassword = asyncHandler(async (req, res) => {
       [newHash, req.user.id]
     );
   } catch (err) {
-    console.error('Database update failed:', err);
+    console.error('Database update failed:', err, 'User ID:', req.user.id);
     return res.status(500).json({ error: 'Failed to update password' });
   }
 

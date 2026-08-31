@@ -46,7 +46,7 @@ async function query(text, params) {
     } catch (err) {
       lastErr = err;
       const msg = (err && err.message) ? err.message : String(err);
-      const retryable = /terminat|timeout|socket hang up|ECONNRESET|ETIMEDOUT|connection.*close/i.test(msg);
+      const retryable = /terminat|timeout|socket hang up|ECONNRESET|ETIMEDOUT|connection.*close|too many clients|Connection terminated|Connection refused/i.test(msg);
       if (!retryable || attempt === maxRetries) break;
       await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
     }
