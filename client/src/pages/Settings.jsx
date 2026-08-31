@@ -265,9 +265,9 @@ export default function Settings() {
                 <div className="flex flex-col sm:flex-row gap-6 items-start">
                   <div className="flex flex-col gap-3 items-center sm:items-start shrink-0">
                     <div className="relative group cursor-pointer">
-                      {form.avatar ? (
-                        <img alt="Current avatar" className="w-28 h-28 rounded-full object-cover border-2 border-surface-variant group-hover:border-primary transition-colors" src={`${API_BASE}${form.avatar}`} />
-                      ) : (
+        {form.avatar ? (
+          <img alt="Current avatar" className="w-28 h-28 rounded-full object-cover border-2 border-surface-variant group-hover:border-primary transition-colors" src={form.avatar.startsWith('http') ? form.avatar : `${API_BASE}${form.avatar}`} />
+        ) : (
                         <div className="w-28 h-28 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-variant group-hover:border-primary transition-colors">
                           <span className="material-symbols-outlined text-[40px] text-outline">person</span>
                         </div>
