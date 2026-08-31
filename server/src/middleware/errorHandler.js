@@ -6,8 +6,9 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
 
   const status = err.status || 500;
   const message = status === 500 ? 'Internal server error' : err.message;
+  const details = process.env.NODE_ENV === 'production' ? undefined : err.message;
 
-  res.status(status).json({ error: message });
+  res.status(status).json({ error: message, ...(details ? { details } : {}) });
 }
 
 module.exports = errorHandler;

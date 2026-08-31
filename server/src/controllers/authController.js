@@ -93,36 +93,47 @@ const changePassword = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  console.log('changePassword: user loaded', { id: user.id, hasPassword: !!user.password_hash, passwordHashLength: user.password_hash?.length });
+
   if (!user.password_hash) {
     return res.status(400).json({ error: 'Password login is not enabled for this account. Use your OAuth provider to sign in.' });
   }
 
+  console.log('changePassword: comparing passwords');
+
   try {
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    console.log('changePassword: bcrypt compare result:', valid);
     if (!valid) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
   } catch (err) {
     console.error('bcrypt compare failed:', err);
-    return res.status(500).json({ error: 'Password verification failed' });
+    return res.status(500).json({ error: 'Password verification failed', details: err.message });
   }
+
+  console.log('changePassword: hashing new password');
 
   let newHash;
   try {
     newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    console.log('changePassword: hash created successfully');
   } catch (err) {
     console.error('bcrypt hash failed:', err);
-    return res.status(500).json({ error: 'Failed to hash new password' });
+    return res.status(500).json({ error: 'Failed to hash new password', details: err.message });
   }
+
+  console.log('changePassword: executing database update');
 
   try {
     await query(
       'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
       [newHash, req.user.id]
     );
+    console.log('changePassword: database update succeeded');
   } catch (err) {
     console.error('Database update failed:', err, 'User ID:', req.user.id);
-    return res.status(500).json({ error: 'Failed to update password' });
+    return res.status(500).json({ error: 'Failed to update password', details: err.message });
   }
 
   return res.json({ success: true });
