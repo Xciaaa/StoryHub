@@ -3,7 +3,6 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const RedisStore = require('connect-redis').default || require('connect-redis');
 const path = require('path');
@@ -14,6 +13,7 @@ const { runMigrations } = require('./config/runMigrations');
 const errorHandler = require('./middleware/errorHandler');
 const { passport } = require('./controllers/oauthController');
 const { requireAuth } = require('./middleware/auth');
+const { publicLimiter, uploadLimiter } = require('./middleware/rateLimiters');
 
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -64,16 +64,9 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(globalLimiter);
-
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+app.use('/api', publicLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', oauthRoutes);
 app.use('/api/projects', projectRoutes);
@@ -89,7 +82,7 @@ app.use('/uploads', (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 }, express.static(path.join(__dirname, '../public/uploads')));
-app.post('/api/upload', requireAuth, upload.single('image'), uploadController.uploadImage);
+app.post('/api/upload', requireAuth, uploadLimiter, upload.single('image'), uploadController.uploadImage);
 
 
 app.use((req, res) => {
